@@ -29,6 +29,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'usertype',
+        'status',
     ];
 
     /**
@@ -63,5 +65,23 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Check if user is a specific type.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->usertype === 'admin';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->usertype === 'manager';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->usertype === 'staff';
     }
 }
