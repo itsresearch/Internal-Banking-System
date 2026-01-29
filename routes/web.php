@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomerController;
+
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -15,7 +17,6 @@ Route::get('/', function () {
             return redirect()->route('dashboard.staff');
         }
     }
-    // Show login page for unauthenticated users
     return redirect()->route('login');
 });
 
@@ -44,3 +45,17 @@ Route::middleware([
     })->name('dashboard.staff');
 });
 
+Route::fallback(function () {
+    return "<h1>Page not found.</h1>";
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::post('/customers_documents', [CustomerController::class, 'documents_store'])->name('customers.documents');
+    Route::get('/customers/{id}/documents', [CustomerController::class, 'documents_create'])
+        ->name('customers.documents.create');
+
+    Route::post('/customers/documents', [CustomerController::class, 'documents_store'])
+        ->name('customers.documents.store');
+});
