@@ -21,14 +21,14 @@ class CustomerController extends Controller
             'first_name'          => 'required|string|max:100',
             'middle_name'         => 'nullable|string|max:100',
             'last_name'           => 'required|string|max:100',
-            'fathers_name'        => 'nullable|string|max:100',
-            'mothers_name'        => 'nullable|string|max:100',
-            'date_of_birth'       => 'nullable|date',
-            'gender'              => 'nullable|in:male,female,other',
-            'phone'               => 'nullable|string|max:20',
-            'email'               => 'nullable|email|max:100',
+            'fathers_name'        => 'required|string|max:100',
+            'mothers_name'        => 'required|string|max:100',
+            'date_of_birth'       => 'required|date',
+            'gender'              => 'required|in:male,female,other',
+            'phone'               => 'required|string|max:20',
+            'email'               => 'required|email|max:100',
             'permanent_address'   => 'required|string|max:255',
-            'temporary_address'   => 'nullable|string|max:255',
+            'temporary_address'   => 'required|string|max:255',
             'status'              => 'required|in:active,inactive',
         ]);
 
@@ -38,8 +38,7 @@ class CustomerController extends Controller
         $customer = Customer::create($validated);
 
         // Redirect to document upload page
-        return redirect()->route('customers.documents.create', $customer->id)
-            ->with('success', 'Customer created successfully. Upload documents.');
+        return redirect()->route('customers.documents.create', $customer->id);
     }
 
     // Show document upload form
@@ -71,6 +70,14 @@ class CustomerController extends Controller
             'uploaded_at'     => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Document uploaded successfully.');
+        return redirect()->route('customers.verify', ['customer_id' => $validated['customer_id']]);
+    }
+
+    public function customers_verify(Request $request)
+    {
+        $customerId = $request->input('customer_id');
+        $customer = Customer::with('documents')->findOrFail($customerId);
+
+        return view('dashboard.customer.verify', compact('customer'));
     }
 }

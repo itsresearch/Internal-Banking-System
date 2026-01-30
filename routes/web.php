@@ -49,13 +49,12 @@ Route::fallback(function () {
     return "<h1>Page not found.</h1>";
 });
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
-    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
-    Route::post('/customers_documents', [CustomerController::class, 'documents_store'])->name('customers.documents');
-    Route::get('/customers/{id}/documents', [CustomerController::class, 'documents_create'])
-        ->name('customers.documents.create');
+Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
+        Route::get('/customers/create', 'create')->name('customers.create');
+        Route::post('/customers', 'store')->name('customers.store');
+        Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create');
+        Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
+        Route::post('/customers/documents/verify', 'customers_verify')->name('customers.verify');
+    });
 
-    Route::post('/customers/documents', [CustomerController::class, 'documents_store'])
-        ->name('customers.documents.store');
-});
+        Route::get('/customers/documents/verify', [CustomerController::class, 'customers_verify'])->name('customers.verify');
