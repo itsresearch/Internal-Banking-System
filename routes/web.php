@@ -50,11 +50,13 @@ Route::fallback(function () {
 });
 
 Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
-        Route::get('/customers/create', 'create')->name('customers.create');
-        Route::post('/customers', 'store')->name('customers.store');
-        Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create');
-        Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
-        Route::post('/customers/documents/verify', 'customers_verify')->name('customers.verify');
-    });
-
-        Route::get('/customers/documents/verify', [CustomerController::class, 'customers_verify'])->name('customers.verify');
+    Route::get('/customers/create', 'create')->name('customers.create');
+    Route::post('/customers', 'store')->name('customers.store');
+    Route::get('/customers/{id}', 'show')->name('customers.show');
+    Route::get('/customers', 'index')->name('customers.index');
+    Route::put('/customers/{id}', 'update')->name('customers.update');
+    Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create');
+    Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
+    Route::get('/customers/documents/verify', 'customers_verify')->name('customers.verify');
+    Route::post('/customers/verify/confirm', 'verify_confirm')->name('customers.verify.confirm');
+});

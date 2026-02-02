@@ -32,39 +32,54 @@
 
                                             <div class="card-body">
 
+                                                @if ($errors->any())
+                                                    <div class="alert alert-danger">
+                                                        <ul class="mb-0">
+                                                            @foreach ($errors->all() as $error)
+                                                                <li>{{ $error }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
+
                                                 <!-- Customer -->
-                                            
+                                                <input type="hidden" name="customer_id" value="{{ $customer->id }}">
                                                 <div class="mb-3">
                                                     <label class="form-label">Customer</label>
-                                                    <input type="text" name="customer_id" class="form-control"
-                                                        placeholder="" value="{{ $customer->first_name}}" required>
+                                                    <input type="text" class="form-control"
+                                                        value="{{ $customer->first_name }} {{ $customer->last_name }}"
+                                                        disabled>
                                                 </div>
 
-                                                <!-- Document Type -->
+                                                <!-- Citizenship Number -->
                                                 <div class="mb-3">
-                                                    <label class="form-label">Document Type</label>
-                                                    <select name="document_type" class="form-select" required>
-                                                        <option value="">-- Select Document Type --</option>
-                                                        <option value="citizenship">Citizenship</option>
-                                                        <option value="passport">Passport</option>
-                                                        <option value="photo">Photo</option>
-                                                    </select>
+                                                    <label class="form-label">Citizenship Number</label>
+                                                    <input type="text" name="citizenship_number" class="form-control"
+                                                        placeholder="Enter citizenship number" required>
                                                 </div>
 
-                                                <!-- Document Number -->
+                                                <!-- Citizenship Front -->
                                                 <div class="mb-3">
-                                                    <label class="form-label">Document Number</label>
-                                                    <input type="text" name="document_number" class="form-control"
-                                                        placeholder="Enter document number" required>
+                                                    <label class="form-label">Citizenship (Front)</label>
+                                                    <input type="file" name="citizenship_front" class="form-control"
+                                                        required>
+                                                    <small class="text-muted">Allowed: JPG / PNG</small>
                                                 </div>
 
-                                                <!-- File -->
+                                                <!-- Citizenship Back -->
                                                 <div class="mb-3">
-                                                    <label class="form-label">Upload File</label>
-                                                    <input type="file" name="file" class="form-control" required>
-                                                    <small class="text-muted">
-                                                        Allowed: PDF / JPG / PNG
-                                                    </small>
+                                                    <label class="form-label">Citizenship (Back)</label>
+                                                    <input type="file" name="citizenship_back" class="form-control"
+                                                        required>
+                                                    <small class="text-muted">Allowed: JPG / PNG</small>
+                                                </div>
+
+                                                <!-- Customer Photo -->
+                                                <div class="mb-3">
+                                                    <label class="form-label">Customer Photo</label>
+                                                    <input type="file" name="customer_photo" class="form-control"
+                                                        required>
+                                                    <small class="text-muted">Allowed: JPG / PNG</small>
                                                 </div>
 
                                             </div>
