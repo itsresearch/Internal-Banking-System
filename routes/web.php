@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\TellerController;
 
 
 Route::get('/', function () {
@@ -64,4 +65,27 @@ Route::middleware(['auth'])->controller(StaffController::class)->group(function 
 
 Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
     Route::get('/customers-list', 'customersList')->name('customers.customersList');
+    Route::get('/customers/{id}/details','customerDetails')->name('customers.customerDetails');
+});
+
+Route::middleware(['auth'])->controller(TellerController::class)->group(function () {
+    // Deposit routes
+    Route::get('/teller/deposit', 'depositForm')->name('teller.deposit');
+    Route::post('/teller/deposit', 'storeDeposit')->name('teller.deposit.store');
+
+    // Withdrawal routes
+    Route::get('/teller/withdrawal', 'withdrawalForm')->name('teller.withdrawal');
+    Route::post('/teller/withdrawal', 'storeWithdrawal')->name('teller.withdrawal.store');
+
+    // Transfer routes
+    Route::get('/teller/transfer', 'transferForm')->name('teller.transfer');
+    Route::post('/teller/transfer', 'storeTransfer')->name('teller.transfer.store');
+
+    // Transaction history
+    Route::get('/teller/history', 'history')->name('teller.history');
+
+    // Approval routes (manager)
+    Route::get('/teller/approvals', 'pendingApprovals')->name('teller.approvals');
+    Route::post('/teller/approve/{id}', 'approveTransaction')->name('teller.approve');
+    Route::post('/teller/reject/{id}', 'rejectTransaction')->name('teller.reject');
 });

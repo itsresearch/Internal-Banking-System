@@ -22,8 +22,10 @@
                             <div class="col-12">
                                 <div class="card shadow-soft">
                                     <div class="card-header bg-white">
-                                        <h5 class="mb-0">Upload Customer Document</h5>
-                                        <p class="text-muted mb-0" style="font-size: 0.95rem;">Attach verified ID or photo for KYC.</p>
+                                        <h5 class="mb-0">Deposit</h5>
+                                        <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                                            Funds post immediately for active accounts.
+                                        </p>
                                     </div>
                                     <div class="card-body">
                                         @if ($errors->any())
@@ -43,53 +45,40 @@
                                             </div>
                                         @endif
 
-                                        <form id="documentForm" method="POST" action="{{ route('customers.documents.store') }}"
-                                            enctype="multipart/form-data">
+                                        <form id="depositForm" method="POST" action="{{ route('teller.deposit.store') }}">
                                             @csrf
-
                                             <div class="row g-4">
-                                                <input type="hidden" name="customer_id" value="{{ $customer->id }}">
-
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Customer (default)</label>
-                                                    <input type="text" class="form-control" value="{{ $customer->first_name }} {{ $customer->last_name }} ({{ $customer->account_number }})" readonly>
-                                                    <div class="helper-text mt-1">This document set will be saved against this customer.</div>
+                                                    <label class="form-label">Customer Account</label>
+                                                    <select name="customer_id" class="form-select" required>
+                                                        <option value="">-- Select Customer --</option>
+                                                        @foreach ($customers as $customer)
+                                                            <option value="{{ $customer->id }}">
+                                                                {{ $customer->first_name }} {{ $customer->last_name }}
+                                                                ({{ $customer->account_number }})
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="helper-text mt-1">Deposits go to available balance instantly.</div>
                                                 </div>
-
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Citizenship Number</label>
-                                                    <input type="text" name="citizenship_number" class="form-control"
-                                                        placeholder="Enter citizenship number" required>
-                                                    <div class="helper-text mt-1">Citizenship and customer photo are mandatory.</div>
+                                                    <label class="form-label">Amount</label>
+                                                    <input type="number" name="amount" class="form-control"
+                                                        step="0.01" min="0.01" placeholder="0.00" required>
+                                                    <div class="helper-text mt-1">Enter amount in NPR.</div>
                                                 </div>
-
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Citizenship (Front)</label>
-                                                    <input type="file" name="citizenship_front" class="form-control" accept="image/*" required>
-                                                    <div class="helper-text mt-1">JPG/PNG, max 2MB.</div>
-                                                </div>
-
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Citizenship (Back)</label>
-                                                    <input type="file" name="citizenship_back" class="form-control" accept="image/*" required>
-                                                    <div class="helper-text mt-1">JPG/PNG, max 2MB.</div>
-                                                </div>
-
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Customer Photo</label>
-                                                    <input type="file" name="customer_photo" class="form-control" accept="image/*" required>
-                                                    <div class="helper-text mt-1">JPG/PNG, max 2MB.</div>
+                                                <div class="col-md-12">
+                                                    <label class="form-label">Notes</label>
+                                                    <textarea name="notes" class="form-control" rows="3" placeholder="Optional note for audit trail"></textarea>
                                                 </div>
                                             </div>
-
                                             <div class="d-flex justify-content-end gap-2 mt-4">
                                                 <button type="reset" class="btn btn-outline-secondary">Clear</button>
-                                                <button type="submit" class="btn btn-secondary" data-disable-on-submit>
-                                                    Upload Document
+                                                <button type="submit" class="btn btn-primary" data-disable-on-submit>
+                                                    Process Deposit
                                                 </button>
                                             </div>
                                         </form>
-
                                     </div>
                                 </div>
                             </div>
@@ -106,9 +95,7 @@
                                     <span class="text-muted">©
                                         <script>
                                             document.write(new Date().getFullYear())
-                                        </script>
-                                        <a href="javascript:void(0);" target="_blank">Research Bank of Nepal</a>
-                                        <span class="text-muted">, All rights reserved</span>
+                                        </script> Research Bank of Nepal, All rights reserved
                                     </span>
                                 </div>
                             </div>
@@ -120,7 +107,6 @@
             </div>
             <!-- / Layout page -->
         </div>
-
         <!-- Overlay -->
         <div class="layout-overlay layout-menu-toggle"></div>
     </div>
@@ -132,23 +118,17 @@
     <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
     <script src="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
-    <!-- endbuild -->
-
-    <!-- Vendors JS -->
-
-    <!-- Main JS -->
     <script src="{{ asset('assets/js/main.js') }}"></script>
-
-    <!-- Page JS -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('documentForm');
+            const form = document.getElementById('depositForm');
             if (!form) return;
-            form.addEventListener('submit', function () {
+
+            form.addEventListener('submit', function (e) {
                 const submitBtn = form.querySelector('[data-disable-on-submit]');
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.textContent = 'Uploading...';
+                    submitBtn.textContent = 'Processing...';
                 }
             });
         });

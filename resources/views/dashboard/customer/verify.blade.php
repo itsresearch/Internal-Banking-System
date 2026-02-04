@@ -25,7 +25,8 @@
                                         <h5 class="mb-0">Verify Customer Details</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form method="POST" action="{{ route('customers.update', $customer->id) }}">
+                                        <form method="POST" action="{{ route('customers.update', $customer->id) }}"
+                                            enctype="multipart/form-data">
                                             @csrf
                                             @method('PUT')
                                             <!-- Customer Details -->
@@ -33,7 +34,7 @@
                                             <div class="row mb-4">
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Account Type</label>
-                                                    <select name="account_type" class="form-control" required>
+                                                    <select name="account_type" class="form-control" required disabled>
                                                         <option value="savings"
                                                             {{ $customer->account_type === 'savings' ? 'selected' : '' }}>
                                                             Savings (individuals)</option>
@@ -48,7 +49,7 @@
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Account Holder Type</label>
                                                     <select name="account_holder_type" id="accountHolderType"
-                                                        class="form-control" required>
+                                                        class="form-control" required disabled>
                                                         <option value="individual"
                                                             {{ $customer->account_holder_type === 'individual' ? 'selected' : '' }}>
                                                             Individual</option>
@@ -63,26 +64,26 @@
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Name</label>
                                                         <input type="text" name="business_name" class="form-control"
-                                                            value="{{ $customer->business_name }}"
+                                                            readonly value="{{ $customer->business_name }}"
                                                             placeholder="Company or firm name">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">PAN / VAT</label>
                                                         <input type="text" name="business_pan_vat"
-                                                            class="form-control"
+                                                            class="form-control" readonly
                                                             value="{{ $customer->business_pan_vat }}"
                                                             placeholder="PAN / VAT number">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Phone</label>
                                                         <input type="text" name="business_phone" class="form-control"
-                                                            value="{{ $customer->business_phone }}"
+                                                            readonly value="{{ $customer->business_phone }}"
                                                             placeholder="Company contact number">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Email</label>
                                                         <input type="email" name="business_email" class="form-control"
-                                                            value="{{ $customer->business_email }}"
+                                                            readonly value="{{ $customer->business_email }}"
                                                             placeholder="accounts@company.com">
                                                     </div>
                                                 </div>
@@ -90,7 +91,7 @@
                                                     <label class="form-label">Savings Withdrawal Limit (per
                                                         month)</label>
                                                     <input type="number" name="monthly_withdrawal_limit"
-                                                        class="form-control" min="0"
+                                                        class="form-control" min="0" readonly
                                                         value="{{ $customer->monthly_withdrawal_limit }}">
                                                     {{-- <small class="text-muted">Applies to Savings. For Current, leave
                                                         blank (unlimited).</small> --}}
@@ -98,7 +99,7 @@
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Overdraft Limit (Current)</label>
                                                     <input type="number" name="overdraft_limit" class="form-control"
-                                                        min="0" step="0.01"
+                                                        min="0" step="0.01" readonly
                                                         value="{{ $customer->overdraft_limit }}">
                                                     {{-- <small class="text-muted">Applies to Current. Savings has no
                                                         overdraft.</small> --}}
@@ -112,27 +113,27 @@
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">First Name</label>
                                                     <input type="text" name="first_name" class="form-control"
-                                                        value="{{ $customer->first_name }}" required>
+                                                        readonly value="{{ $customer->first_name }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Middle Name</label>
                                                     <input type="text" name="middle_name" class="form-control"
-                                                        value="{{ $customer->middle_name }}">
+                                                        readonly value="{{ $customer->middle_name }}">
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Last Name</label>
-                                                    <input type="text" name="last_name" class="form-control"
+                                                    <input type="text" name="last_name" class="form-control" readonly
                                                         value="{{ $customer->last_name }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Father's Name</label>
                                                     <input type="text" name="fathers_name" class="form-control"
-                                                        value="{{ $customer->fathers_name }}" required>
+                                                        readonly value="{{ $customer->fathers_name }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Mother's Name</label>
                                                     <input type="text" name="mothers_name" class="form-control"
-                                                        value="{{ $customer->mothers_name }}" required>
+                                                        readonly value="{{ $customer->mothers_name }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Email</label>
@@ -157,11 +158,11 @@
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Date of Birth</label>
                                                     <input type="date" name="date_of_birth" class="form-control"
-                                                        value="{{ $customer->date_of_birth }}" required>
+                                                        readonly value="{{ $customer->date_of_birth }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Gender</label>
-                                                    <select name="gender" class="form-control" required>
+                                                    <select name="gender" class="form-control" required disabled>
                                                         <option value="male"
                                                             {{ $customer->gender == 'male' ? 'selected' : '' }}>Male
                                                         </option>
@@ -181,7 +182,7 @@
                                                             Active</option>
                                                         <option value="inactive"
                                                             {{ $customer->status == 'inactive' ? 'selected' : '' }}>
-                                                            Inactive</option>
+                                                            Frozen</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-12 mb-3">
@@ -191,6 +192,23 @@
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label">Temporary Address</label>
                                                     <textarea name="temporary_address" class="form-control" rows="2" required>{{ $customer->temporary_address }}</textarea>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Nominee Name</label>
+                                                    <input type="text" name="nominee_name" class="form-control"
+                                                        value="{{ $customer->nominee_name }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Nominee Relation</label>
+                                                    <input type="text" name="nominee_relation"
+                                                        class="form-control"
+                                                        value="{{ $customer->nominee_relation }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Authorized Signatory</label>
+                                                    <input type="text" name="authorized_signatory"
+                                                        class="form-control"
+                                                        value="{{ $customer->authorized_signatory }}">
                                                 </div>
                                             </div>
 
@@ -224,6 +242,30 @@
                                             @else
                                                 <p class="text-muted">No documents uploaded yet.</p>
                                             @endif
+
+                                            <h6 class="text-primary mb-3 mt-4">KYC Document Updates (Re-upload)</h6>
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Citizenship Number</label>
+                                                    <input type="text" name="citizenship_number"
+                                                        class="form-control" value="">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Citizenship Front</label>
+                                                    <input type="file" name="citizenship_front"
+                                                        class="form-control" accept="image/*">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Citizenship Back</label>
+                                                    <input type="file" name="citizenship_back"
+                                                        class="form-control" accept="image/*">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Customer Photo</label>
+                                                    <input type="file" name="customer_photo" class="form-control"
+                                                        accept="image/*">
+                                                </div>
+                                            </div>
 
                                             <div class="text-end mb-3">
                                                 <button type="submit" class="btn btn-primary">Update Details</button>

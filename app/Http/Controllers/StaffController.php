@@ -6,7 +6,7 @@ use App\Models\Customer;
 use App\Models\CustomerDocument;
 use Illuminate\Http\Request;
 
-class CustomerController extends Controller
+class StaffController extends Controller
 {
     public function create()
     {
@@ -145,7 +145,9 @@ class CustomerController extends Controller
             'uploaded_at'     => now(),
         ]);
 
-        return redirect()->route('customers.verify', ['customer_id' => $validated['customer_id']]);
+        return redirect()
+            ->route('customers.show', $validated['customer_id'])
+            ->with('success', 'Documents uploaded successfully. Please verify the customer details below.');
     }
 
     // Update customer
@@ -154,58 +156,56 @@ class CustomerController extends Controller
         $customer = Customer::findOrFail($id);
 
         $validated = $request->validate([
-            'account_holder_type' => 'required|in:individual,business',
-            'account_type'        => 'required|in:savings,current',
-            'opening_balance'     => 'required|numeric|min:0',
-            'business_name'       => 'nullable|required_if:account_holder_type,business|string|max:255',
-            'business_pan_vat'    => 'nullable|required_if:account_holder_type,business|string|max:100',
-            'business_phone'      => 'nullable|required_if:account_holder_type,business|string|max:50',
-            'business_email'      => 'nullable|required_if:account_holder_type,business|email|max:150',
-            'business_type'       => 'nullable|required_if:account_holder_type,business|in:company,firm,proprietorship,other',
-            'registration_number' => 'nullable|required_if:account_holder_type,business|string|max:150',
-            'business_address'    => 'nullable|required_if:account_holder_type,business|string|max:255',
-            'monthly_withdrawal_limit' => 'nullable|integer|min:0',
-            'overdraft_enabled'   => 'nullable|boolean',
-            'overdraft_limit'     => 'nullable|required_if:overdraft_enabled,1|numeric|min:0',
-            'authorized_signatory'=> 'nullable|required_if:account_type,current|string|max:255',
-            'occupation'          => 'nullable|string|max:150',
-            'first_name'          => 'required|string|max:100',
-            'middle_name'         => 'nullable|string|max:100',
-            'last_name'           => 'required|string|max:100',
             'email'               => 'required|email|max:100|unique:customers,email,' . $id,
             'phone'               => 'required|string|max:20',
-            'date_of_birth'       => 'required|date',
-            'gender'              => 'required|in:male,female,other',
             'permanent_address'   => 'required|string|max:255',
             'temporary_address'   => 'required|string|max:255',
+            'nominee_name'        => 'nullable|string|max:255',
+            'nominee_relation'    => 'nullable|string|max:255',
+            'authorized_signatory'=> 'nullable|string|max:255',
             'status'              => 'required|in:active,inactive',
+            'citizenship_number'  => 'nullable|string|max:50',
+            'citizenship_front'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'citizenship_back'    => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'customer_photo'      => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        if ($validated['account_type'] === 'savings') {
-            $validated['monthly_withdrawal_limit'] = $validated['monthly_withdrawal_limit'] ?? ($customer->monthly_withdrawal_limit ?? 4);
-            $validated['overdraft_enabled'] = false;
-            $validated['overdraft_limit'] = null;
-            $validated['authorized_signatory'] = null;
-        } else {
-            $validated['monthly_withdrawal_limit'] = null;
-            $validated['overdraft_enabled'] = $request->boolean('overdraft_enabled');
-            $validated['overdraft_limit'] = $validated['overdraft_enabled'] ? ($validated['overdraft_limit'] ?? $customer->overdraft_limit ?? 0.00) : null;
+        $customer->update([
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'permanent_address' => $validated['permanent_address'],
+            'temporary_address' => $validated['temporary_address'],
+            'nominee_name' => $validated['nominee_name'] ?? null,
+            'nominee_relation' => $validated['nominee_relation'] ?? null,
+            'authorized_signatory' => $validated['authorized_signatory'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        $citizenshipNumber = $validated['citizenship_number'] ?? null;
+
+        if ($request->hasFile('citizenship_front')) {
+            $path = $request->file('citizenship_front')->store('customer_documents', 'public');
+            CustomerDocument::updateOrCreate(
+                ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'front'],
+                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'citizenship')->where('document_side', 'front')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+            );
         }
 
-        if ($validated['account_holder_type'] === 'individual') {
-            $validated['business_name'] = null;
-            $validated['business_pan_vat'] = null;
-            $validated['business_phone'] = null;
-            $validated['business_email'] = null;
-            $validated['business_type'] = null;
-            $validated['registration_number'] = null;
-            $validated['business_address'] = null;
+        if ($request->hasFile('citizenship_back')) {
+            $path = $request->file('citizenship_back')->store('customer_documents', 'public');
+            CustomerDocument::updateOrCreate(
+                ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'back'],
+                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'citizenship')->where('document_side', 'back')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+            );
         }
 
-        // Preserve manager-set interest rate if already present; otherwise set default
-        $validated['interest_rate'] = $customer->interest_rate ?? $this->defaultInterestRate($validated['account_type']);
-
-        $customer->update($validated);
+        if ($request->hasFile('customer_photo')) {
+            $path = $request->file('customer_photo')->store('customer_documents', 'public');
+            CustomerDocument::updateOrCreate(
+                ['customer_id' => $customer->id, 'document_type' => 'photo', 'document_side' => null],
+                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'photo')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+            );
+        }
 
         return redirect()->back()->with('success', 'Customer updated successfully.');
     }
