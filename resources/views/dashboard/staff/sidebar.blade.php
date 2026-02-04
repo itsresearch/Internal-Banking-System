@@ -106,7 +106,7 @@
 
             <!-- Layouts -->
             <li class="menu-item">
-              <a href="javascript:void(0);" class="menu-link menu-toggle">
+              <a href="{{ route('customers.customersList') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-layout"></i>
                 <div class="text-truncate" data-i18n="Layouts">Customers</div>
               </a>

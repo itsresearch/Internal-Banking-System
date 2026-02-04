@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\StaffController;
 
 
 Route::get('/', function () {
@@ -49,7 +50,7 @@ Route::fallback(function () {
     return "<h1>Page not found.</h1>";
 });
 
-Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
+Route::middleware(['auth'])->controller(StaffController::class)->group(function () {
     Route::get('/customers/create', 'create')->name('customers.create');
     Route::post('/customers', 'store')->name('customers.store');
     Route::get('/customers/{id}', 'show')->name('customers.show');
@@ -59,4 +60,8 @@ Route::middleware(['auth'])->controller(CustomerController::class)->group(functi
     Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
     Route::get('/customers/documents/verify', 'customers_verify')->name('customers.verify');
     Route::post('/customers/verify/confirm', 'verify_confirm')->name('customers.verify.confirm');
+});
+
+Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
+    Route::get('/customers-list', 'customersList')->name('customers.customersList');
 });
