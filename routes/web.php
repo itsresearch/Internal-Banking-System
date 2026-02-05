@@ -47,25 +47,23 @@ Route::middleware([
     })->name('dashboard.staff');
 });
 
-Route::fallback(function () {
-    return "<h1>Page not found.</h1>";
-});
-
 Route::middleware(['auth'])->controller(StaffController::class)->group(function () {
     Route::get('/customers/create', 'create')->name('customers.create');
     Route::post('/customers', 'store')->name('customers.store');
-    Route::get('/customers/{id}', 'show')->name('customers.show');
     Route::get('/customers', 'index')->name('customers.index');
-    Route::put('/customers/{id}', 'update')->name('customers.update');
-    Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create');
+    Route::put('/customers/{id}', 'update')->name('customers.update')->whereNumber('id');
+    Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create')->whereNumber('id');
     Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
     Route::get('/customers/documents/verify', 'customers_verify')->name('customers.verify');
     Route::post('/customers/verify/confirm', 'verify_confirm')->name('customers.verify.confirm');
+    // Keep this numeric constraint so it doesn't conflict with /customers/search
+    Route::get('/customers/{id}', 'show')->name('customers.show')->whereNumber('id');
 });
 
 Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
     Route::get('/customers-list', 'customersList')->name('customers.customersList');
-    Route::get('/customers/{id}/details','customerDetails')->name('customers.customerDetails');
+    Route::get('/customers/{id}/details','customerDetails')->name('customers.customerDetails')->whereNumber('id');
+    Route::get('/customers/search', 'searchCustomers')->name('customers.search');
 });
 
 Route::middleware(['auth'])->controller(TellerController::class)->group(function () {

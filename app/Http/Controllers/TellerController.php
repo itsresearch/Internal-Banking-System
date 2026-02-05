@@ -23,7 +23,7 @@ class TellerController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'amount'      => 'required|numeric|min:0.01',
+            'amount'      => 'required|numeric|min:10',
             'notes'       => 'nullable|string|max:255',
         ]);
 
@@ -75,7 +75,7 @@ class TellerController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'amount'      => 'required|numeric|min:0.01',
+            'amount'      => 'required|numeric|min:10',
             'notes'       => 'nullable|string|max:255',
         ]);
 
@@ -173,7 +173,8 @@ class TellerController extends Controller
                 }
 
                 $amount = $validated['amount'];
-                $referenceNumber = $this->generateReferenceNumber();
+                $debitReferenceNumber = $this->generateReferenceNumber();
+                $creditReferenceNumber = $this->generateReferenceNumber();
 
                 // Check balance for from account
                 $fromBalanceBefore = $fromCustomer->opening_balance;
@@ -206,7 +207,7 @@ class TellerController extends Controller
                     'balance_before' => $fromBalanceBefore,
                     'balance_after' => $fromBalanceAfter,
                     'status' => $status,
-                    'reference_number' => $referenceNumber,
+                    'reference_number' => $debitReferenceNumber,
                     'created_by' => auth()->id(),
                     'notes' => "Transfer to {$toCustomer->first_name} {$toCustomer->last_name}. " . ($validated['notes'] ?? ''),
                 ]);
@@ -222,7 +223,7 @@ class TellerController extends Controller
                     'balance_before' => $toBalanceBefore,
                     'balance_after' => $toBalanceAfter,
                     'status' => $status,
-                    'reference_number' => $referenceNumber,
+                    'reference_number' => $creditReferenceNumber,
                     'linked_transaction_id' => $debitTransaction->id,
                     'created_by' => auth()->id(),
                     'notes' => "Transfer from {$fromCustomer->first_name} {$fromCustomer->last_name}. " . ($validated['notes'] ?? ''),
@@ -238,8 +239,8 @@ class TellerController extends Controller
                 }
 
                 $message = $requiresApproval 
-                    ? "Transfer request submitted for approval. Reference: {$referenceNumber}"
-                    : "Transfer of {$amount} processed successfully. Reference: {$referenceNumber}";
+                    ? "Transfer request submitted for approval. Reference: {$debitReferenceNumber}"
+                    : "Transfer of {$amount} processed successfully. Reference: {$debitReferenceNumber}";
 
                 return redirect()->route('teller.transfer')
                     ->with('success', $message);
@@ -349,7 +350,11 @@ class TellerController extends Controller
     private function generateReferenceNumber()
     {
         $prefix = 'TXN-' . date('Ymd');
-        $count = Transaction::where('reference_number', 'like', $prefix . '%')->count();
-        return $prefix . str_pad($count + 1, 6, '0', STR_PAD_LEFT);
+        do {
+            $suffix = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $referenceNumber = $prefix . $suffix;
+        } while (Transaction::where('reference_number', $referenceNumber)->exists());
+
+        return $referenceNumber;
     }
 }

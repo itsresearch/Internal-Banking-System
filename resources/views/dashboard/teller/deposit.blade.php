@@ -47,31 +47,53 @@
 
                                         <form id="depositForm" method="POST" action="{{ route('teller.deposit.store') }}">
                                             @csrf
+                                            <input type="hidden" name="customer_id" id="depositCustomerId" required>
+
                                             <div class="row g-4">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Customer Account</label>
-                                                    <select name="customer_id" class="form-select" required>
-                                                        <option value="">-- Select Customer --</option>
-                                                        @foreach ($customers as $customer)
-                                                            <option value="{{ $customer->id }}">
-                                                                {{ $customer->first_name }} {{ $customer->last_name }}
-                                                                ({{ $customer->account_number }})
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="helper-text mt-1">Deposits go to available balance instantly.</div>
+                                                <div class="col-lg-7">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Customer (search)</label>
+                                                            <input id="depositSearch" type="text" class="form-control"
+                                                                placeholder="Search by name, account number, or citizenship number"
+                                                                autocomplete="off" required>
+                                                            <div class="helper-text mt-1">Select a customer to populate the summary.</div>
+                                                            <div id="depositSearchResults" class="list-group mt-2" style="display:none;"></div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Amount</label>
+                                                            <input type="number" name="amount" class="form-control"
+                                                                step="0.01" min="10" placeholder="0.00" required>
+                                                            <div class="helper-text mt-1">Enter amount in NPR (min NPR 10).</div>
+                                                        </div>
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Notes</label>
+                                                            <textarea name="notes" class="form-control" rows="3"
+                                                                placeholder="Optional note for audit trail"></textarea>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Amount</label>
-                                                    <input type="number" name="amount" class="form-control"
-                                                        step="0.01" min="0.01" placeholder="0.00" required>
-                                                    <div class="helper-text mt-1">Enter amount in NPR.</div>
+                                                <div class="col-lg-5">
+                                                    <div class="p-3 border rounded-3 bg-light h-100">
+                                                        <div class="section-title">Account summary</div>
+                                                        <div class="helper-text mb-2">Populates after you select a customer.</div>
+                                                        <div id="depositSummary" class="text-muted">
+                                                            <div>Customer: —</div>
+                                                            <div>Account #: —</div>
+                                                            <div>Balance: —</div>
+                                                            <div>Type: —</div>
+                                                            <div>Status: —</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-12">
-                                                    <label class="form-label">Notes</label>
-                                                    <textarea name="notes" class="form-control" rows="3" placeholder="Optional note for audit trail"></textarea>
+
+                                                <div class="col-12">
+                                                    <div class="alert alert-info mb-0">
+                                                        Deposits post immediately for active accounts.
+                                                    </div>
                                                 </div>
                                             </div>
+
                                             <div class="d-flex justify-content-end gap-2 mt-4">
                                                 <button type="reset" class="btn btn-outline-secondary">Clear</button>
                                                 <button type="submit" class="btn btn-primary" data-disable-on-submit>
@@ -124,7 +146,89 @@
             const form = document.getElementById('depositForm');
             if (!form) return;
 
+            const searchInput = document.getElementById('depositSearch');
+            const results = document.getElementById('depositSearchResults');
+            const customerIdInput = document.getElementById('depositCustomerId');
+            const summary = document.getElementById('depositSummary');
+
+            let debounceTimer = null;
+            let lastQuery = '';
+
+            function formatCurrency(val) {
+                const num = Number(val);
+                if (Number.isNaN(num)) return '—';
+                return 'NPR ' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function showResults(items) {
+                if (!results) return;
+                results.innerHTML = '';
+                if (!items || items.length === 0) {
+                    results.style.display = 'none';
+                    return;
+                }
+                items.forEach((item) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'list-group-item list-group-item-action';
+                    btn.innerHTML = `<div class="fw-semibold">${item.name}</div>
+                        <div class="text-muted" style="font-size:0.9rem;">${item.account_number || '—'} • ${item.account_type || '—'} • Balance: ${formatCurrency(item.opening_balance)}</div>`;
+                    btn.addEventListener('click', () => {
+                        if (customerIdInput) customerIdInput.value = item.id;
+                        if (searchInput) searchInput.value = `${item.name} (${item.account_number || '—'})`;
+                        if (summary) {
+                            summary.innerHTML = `
+                                <div>Customer: <strong>${item.name}</strong></div>
+                                <div>Account #: <strong>${item.account_number || '—'}</strong></div>
+                                <div>Balance: <strong>${formatCurrency(item.opening_balance)}</strong></div>
+                                <div>Type: <strong>${(item.account_type || '—').toUpperCase()}</strong></div>
+                                <div>Status: <strong>${(item.status || '—').toUpperCase()}</strong></div>
+                            `;
+                        }
+                        results.style.display = 'none';
+                    });
+                    results.appendChild(btn);
+                });
+                results.style.display = 'block';
+            }
+
+            async function runSearch(q) {
+                const url = new URL("{{ route('customers.search') }}", window.location.origin);
+                url.searchParams.set('q', q);
+                const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) return [];
+                return await res.json();
+            }
+
+            if (searchInput && results) {
+                searchInput.addEventListener('input', function () {
+                    const q = (searchInput.value || '').trim();
+                    if (q.length < 2) {
+                        results.style.display = 'none';
+                        return;
+                    }
+                    lastQuery = q;
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(async () => {
+                        const items = await runSearch(q);
+                        if (lastQuery !== q) return;
+                        showResults(items);
+                    }, 250);
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!results.contains(e.target) && e.target !== searchInput) {
+                        results.style.display = 'none';
+                    }
+                });
+            }
+
             form.addEventListener('submit', function (e) {
+                if (customerIdInput && !customerIdInput.value) {
+                    e.preventDefault();
+                    alert('Please search and select a customer first.');
+                    return;
+                }
                 const submitBtn = form.querySelector('[data-disable-on-submit]');
                 if (submitBtn) {
                     submitBtn.disabled = true;

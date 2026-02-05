@@ -6,13 +6,21 @@
         </a>
     </div>
 
-    <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+        <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
         <!-- Search -->
         <div class="navbar-nav align-items-center me-auto">
             <div class="nav-item d-flex align-items-center">
                 <span class="w-px-22 h-px-22"><i class="icon-base bx bx-search icon-md"></i></span>
-                <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2 d-md-block d-none"
-                    placeholder="Search..." aria-label="Search..." />
+                    <form action="{{ route('customers.customersList') }}" method="GET" class="d-md-block d-none">
+                        <input
+                            type="text"
+                            name="q"
+                            class="form-control border-0 shadow-none ps-1 ps-sm-2"
+                            placeholder="Search customer: name, account, citizenship..."
+                            aria-label="Search customer"
+                            value="{{ request('q') }}"
+                        />
+                    </form>
             </div>
         </div>
         <!-- /Search -->

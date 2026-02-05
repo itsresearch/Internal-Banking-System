@@ -20,16 +20,29 @@
                     <div class="container-xxl flex-grow-1 container-p-y">
                         <div class="row">
                             <div class="col-12">
-                                <div class="card">
-                                    <h5 class="card-header">All Customers</h5>
+                                <div class="card shadow-soft">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h5 class="mb-0">All Customers</h5>
+                                            @if (request('q'))
+                                                <div class="text-muted" style="font-size: 0.95rem;">
+                                                    Showing results for <strong>{{ request('q') }}</strong>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <a href="{{ route('customers.create') }}" class="btn btn-primary">
+                                            Add Customer
+                                        </a>
+                                    </div>
                                     <div class="table-responsive text-nowrap">
-                                        <table class="table">
+                                        <table class="table table-hover align-middle">
                                             <thead>
                                               
                                                 <tr>
                                                     <th>Customer ID</th>
                                                     <th>First Name</th>
                                                     <th>Last Name</th>
+                                                    <th>Account #</th>
                                                     <th>Email</th>
                                                     <th>Phone</th>
                                                     <th>Temporary Address</th>
@@ -41,6 +54,7 @@
                                                         <td>{{ $customer->id }}</td>
                                                         <td>{{ $customer->first_name }}</td>
                                                         <td>{{ $customer->last_name }}</td>
+                                                        <td>{{ $customer->account_number ?? '—' }}</td>
                                                         <td>{{ $customer->email }}</td>
                                                         <td>{{ $customer->phone }}</td>
                                                         <td>{{ $customer->temporary_address }}</td>

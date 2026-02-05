@@ -21,6 +21,17 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="card">
+                                    @if ($errors->any())
+                                        <div class="alert alert-danger m-3">
+                                            <div class="fw-semibold mb-2">Please fix the highlighted errors:</div>
+                                            <ul class="mb-0">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
                                     <form method="POST" action="{{ route('customers.store') }}">
                                         @csrf
 
@@ -30,7 +41,7 @@
                                             </div>
 
                                             <div class="card-body">
-                                                
+
 
                                                 <!-- Account Holder & Type -->
                                                 <div class="row">
@@ -66,8 +77,8 @@
                                                 <div id="savingsFields" class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Interest Rate </label>
-                                                        <input type="text" class="form-control"
-                                                            value="5%" readonly>
+                                                        <input type="text" class="form-control" value="5%"
+                                                            readonly>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Account Opening Date</label>
@@ -129,7 +140,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
-                                                     <label class="form-label">Registration Number</label>
+                                                        <label class="form-label">Registration Number</label>
                                                         <input type="text" name="registration_number"
                                                             class="form-control" placeholder="Registration no.">
                                                     </div>
@@ -180,12 +191,12 @@
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Father's Name</label>
                                                         <input type="text" name="fathers_name"
-                                                            class="form-control">
+                                                            class="form-control" required>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Mother's Name</label>
                                                         <input type="text" name="mothers_name"
-                                                            class="form-control">
+                                                            class="form-control" required>
                                                     </div>
                                                 </div>
 
@@ -194,11 +205,11 @@
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Date of Birth</label>
                                                         <input type="date" name="date_of_birth"
-                                                            class="form-control">
+                                                            class="form-control" required>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Gender</label>
-                                                        <select name="gender" class="form-select">
+                                                        <select name="gender" class="form-select" required>
                                                             <option value="">-- Select Gender --</option>
                                                             <option value="male">Male</option>
                                                             <option value="female">Female</option>
@@ -211,11 +222,13 @@
                                                 <div class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Phone</label>
-                                                        <input type="text" name="phone" class="form-control">
+                                                        <input type="text" name="phone" class="form-control"
+                                                            required>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Email</label>
-                                                        <input type="email" name="email" class="form-control">
+                                                        <input type="email" name="email" class="form-control"
+                                                            required>
                                                     </div>
                                                 </div>
 
@@ -229,7 +242,7 @@
                                                 <div class="mb-3">
                                                     <label class="form-label">Temporary Address</label>
                                                     <input type="text" name="temporary_address"
-                                                        class="form-control">
+                                                        class="form-control" required>
                                                 </div>
 
                                                 <div class="mb-3">
@@ -333,21 +346,41 @@
             const overdraftEnabled = document.getElementById('overdraftEnabled');
             const overdraftLimitField = document.getElementById('overdraftLimitField');
             const individualExtras = document.getElementById('individualExtras');
+            const businessRequiredFields = [
+                document.querySelector('input[name="business_name"]'),
+                document.querySelector('input[name="business_pan_vat"]'),
+                document.querySelector('input[name="business_phone"]'),
+                document.querySelector('input[name="business_email"]'),
+                document.querySelector('select[name="business_type"]'),
+                document.querySelector('input[name="registration_number"]'),
+                document.querySelector('input[name="business_address"]'),
+            ];
+            const authorizedSignatoryField = document.querySelector('input[name="authorized_signatory"]');
+            const overdraftLimitInput = document.querySelector('input[name="overdraft_limit"]');
 
             function toggleBusinessFields() {
                 const isBusiness = holderSelect.value === 'business';
                 businessFields.style.display = isBusiness ? 'flex' : 'none';
                 individualExtras.style.display = isBusiness ? 'none' : 'flex';
+                businessRequiredFields.forEach((field) => {
+                    if (field) field.required = isBusiness;
+                });
             }
 
             function toggleAccountTypeFields() {
                 const isSavings = accountTypeSelect.value === 'savings';
                 savingsFields.style.display = isSavings ? 'flex' : 'none';
                 currentFields.style.display = isSavings ? 'none' : 'flex';
+                if (authorizedSignatoryField) {
+                    authorizedSignatoryField.required = !isSavings;
+                }
             }
 
             function toggleOverdraftLimit() {
                 overdraftLimitField.style.display = overdraftEnabled.value === '1' ? 'block' : 'none';
+                if (overdraftLimitInput) {
+                    overdraftLimitInput.required = overdraftEnabled.value === '1';
+                }
             }
 
             holderSelect?.addEventListener('change', toggleBusinessFields);
