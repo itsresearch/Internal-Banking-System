@@ -2,8 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerDocumentController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TellerController;
+use App\Http\Controllers\TransactionController;
 
 
 Route::get('/', function () {
@@ -52,12 +54,15 @@ Route::middleware(['auth'])->controller(StaffController::class)->group(function 
     Route::post('/customers', 'store')->name('customers.store');
     Route::get('/customers', 'index')->name('customers.index');
     Route::put('/customers/{id}', 'update')->name('customers.update')->whereNumber('id');
+    // Keep this numeric constraint so it doesn't conflict with /customers/search
+    Route::get('/customers/{id}', 'show')->name('customers.show')->whereNumber('id');
+});
+
+Route::middleware(['auth'])->controller(CustomerDocumentController::class)->group(function () {
     Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create')->whereNumber('id');
     Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
     Route::get('/customers/documents/verify', 'customers_verify')->name('customers.verify');
     Route::post('/customers/verify/confirm', 'verify_confirm')->name('customers.verify.confirm');
-    // Keep this numeric constraint so it doesn't conflict with /customers/search
-    Route::get('/customers/{id}', 'show')->name('customers.show')->whereNumber('id');
 });
 
 Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
@@ -69,14 +74,22 @@ Route::middleware(['auth'])->controller(CustomerController::class)->group(functi
 Route::middleware(['auth'])->controller(TellerController::class)->group(function () {
     // Deposit routes
     Route::get('/teller/deposit', 'depositForm')->name('teller.deposit');
-    Route::post('/teller/deposit', 'storeDeposit')->name('teller.deposit.store');
 
     // Withdrawal routes
     Route::get('/teller/withdrawal', 'withdrawalForm')->name('teller.withdrawal');
-    Route::post('/teller/withdrawal', 'storeWithdrawal')->name('teller.withdrawal.store');
 
     // Transfer routes
     Route::get('/teller/transfer', 'transferForm')->name('teller.transfer');
+});
+
+Route::middleware(['auth'])->controller(TransactionController::class)->group(function () {
+    // Deposit routes
+    Route::post('/teller/deposit', 'storeDeposit')->name('teller.deposit.store');
+
+    // Withdrawal routes
+    Route::post('/teller/withdrawal', 'storeWithdrawal')->name('teller.withdrawal.store');
+
+    // Transfer routes
     Route::post('/teller/transfer', 'storeTransfer')->name('teller.transfer.store');
 
     // Transaction history
