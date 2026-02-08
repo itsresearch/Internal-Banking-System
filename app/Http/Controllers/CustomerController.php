@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use App\Models\Transaction;
+use App\Models\Customer;
 
 class CustomerController extends Controller
 {
@@ -13,7 +12,7 @@ class CustomerController extends Controller
     {
         $q = trim((string) request('q', ''));
 
-        $customersQuery = DB::table('customers');
+        $customersQuery = Customer::query();
 
         if ($q !== '') {
             // Search by name, account number, email, phone, and citizenship number (stored as document_number)
@@ -27,12 +26,9 @@ class CustomerController extends Controller
                     ->orWhere('customer_code', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%")
-                    ->orWhereExists(function ($doc) use ($q) {
-                        $doc->select(DB::raw(1))
-                            ->from('customer_documents')
-                            ->whereColumn('customer_documents.customer_id', 'customers.id')
-                            ->where('customer_documents.document_type', 'citizenship')
-                            ->where('customer_documents.document_number', 'like', "%{$q}%");
+                    ->orWhereHas('documents', function ($doc) use ($q) {
+                        $doc->where('document_type', 'citizenship')
+                            ->where('document_number', 'like', "%{$q}%");
                     });
             });
         }
@@ -45,17 +41,37 @@ class CustomerController extends Controller
     }
     public function customerDetails($id)
     {
-        $customer = DB::table('customers')->find($id);
-        $documents = DB::table('customer_documents')->where('customer_id', $id)->get();
-        $photo = $documents->where('document_type', 'photo')->first();
-        $citizenship_front = $documents->where('document_type', 'citizenship')->where('document_side', 'front')->first();
-        $citizenship_back = $documents->where('document_type', 'citizenship')->where('document_side', 'back')->first();
+        $customer = Customer::find($id);
 
-        $transactions = Transaction::with(['createdBy', 'approvedBy'])
-            ->where('customer_id', $id)
-            ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get();
+        $documents = $customer
+            ? $customer->documents()
+                ->where(function ($doc) {
+                    $doc->where('document_type', 'photo')
+                        ->orWhere(function ($citizenship) {
+                            $citizenship->where('document_type', 'citizenship')
+                                ->whereIn('document_side', ['front', 'back']);
+                        });
+                })
+                ->get()
+            : collect();
+
+        $photo = $documents->firstWhere('document_type', 'photo');
+        $citizenship_front = $documents
+            ->where('document_type', 'citizenship')
+            ->where('document_side', 'front')
+            ->first();
+        $citizenship_back = $documents
+            ->where('document_type', 'citizenship')
+            ->where('document_side', 'back')
+            ->first();
+
+        $transactions = $customer
+            ? $customer->transactions()
+                ->with(['createdBy', 'approvedBy'])
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get()
+            : collect();
 
         // Current balance is stored on customers.opening_balance in this system.
         $currentBalance = $customer?->opening_balance ?? 0;
@@ -81,7 +97,7 @@ class CustomerController extends Controller
             return response()->json([]);
         }
 
-        $customers = DB::table('customers')
+        $customers = Customer::query()
             ->select('id', 'first_name', 'last_name', 'account_number', 'account_type', 'opening_balance', 'overdraft_enabled', 'overdraft_limit', 'status')
             ->where(function ($sub) use ($q) {
                 $sub
@@ -90,12 +106,9 @@ class CustomerController extends Controller
                     ->orWhere('last_name', 'like', "%{$q}%")
                     ->orWhereRaw("CONCAT(first_name,' ',last_name) like ?", ["%{$q}%"])
                     ->orWhere('account_number', 'like', "%{$q}%")
-                    ->orWhereExists(function ($doc) use ($q) {
-                        $doc->select(DB::raw(1))
-                            ->from('customer_documents')
-                            ->whereColumn('customer_documents.customer_id', 'customers.id')
-                            ->where('customer_documents.document_type', 'citizenship')
-                            ->where('customer_documents.document_number', 'like', "%{$q}%");
+                    ->orWhereHas('documents', function ($doc) use ($q) {
+                        $doc->where('document_type', 'citizenship')
+                            ->where('document_number', 'like', "%{$q}%");
                     });
             })
             ->orderBy('id', 'desc')
@@ -119,3 +132,4 @@ class CustomerController extends Controller
         return response()->json($payload);
     }
 }
+
