@@ -10,32 +10,7 @@ class CustomerController extends Controller
     //
     public function customersList()
     {
-        $q = trim((string) request('q', ''));
-
-        $customersQuery = Customer::query();
-
-        if ($q !== '') {
-            // Search by name, account number, email, phone, and citizenship number (stored as document_number)
-            $customersQuery->where(function ($sub) use ($q) {
-                $sub
-                    ->where('first_name', 'like', "%{$q}%")
-                    ->orWhere('middle_name', 'like', "%{$q}%")
-                    ->orWhere('last_name', 'like', "%{$q}%")
-                    ->orWhereRaw("CONCAT(first_name,' ',last_name) like ?", ["%{$q}%"])
-                    ->orWhere('account_number', 'like', "%{$q}%")
-                    ->orWhere('customer_code', 'like', "%{$q}%")
-                    ->orWhere('email', 'like', "%{$q}%")
-                    ->orWhere('phone', 'like', "%{$q}%")
-                    ->orWhereHas('documents', function ($doc) use ($q) {
-                        $doc->where('document_type', 'citizenship')
-                            ->where('document_number', 'like', "%{$q}%");
-                    });
-            });
-        }
-
-        $customers = $customersQuery
-            ->orderBy('id', 'desc')
-            ->get();
+        $customers = Customer::orderBy('id', 'desc')->get();
 
         return view('dashboard.customer.all_customers', compact('customers'));
     }
@@ -48,8 +23,7 @@ class CustomerController extends Controller
                 ->where(function ($doc) {
                     $doc->where('document_type', 'photo')
                         ->orWhere(function ($citizenship) {
-                            $citizenship->where('document_type', 'citizenship')
-                                ->whereIn('document_side', ['front', 'back']);
+                            $citizenship->where('document_type', 'citizenship') ->whereIn('document_side', ['front', 'back']);
                         });
                 })
                 ->get()
@@ -73,8 +47,8 @@ class CustomerController extends Controller
                 ->get()
             : collect();
 
-        // Current balance is stored on customers.opening_balance in this system.
-        $currentBalance = $customer?->opening_balance ?? 0;
+        // Current balance is stored on customers.balance in this system.
+        $currentBalance = $customer?->balance ?? 0;
 
         return view('dashboard.customer.customer_details', compact(
             'customer',
@@ -86,10 +60,6 @@ class CustomerController extends Controller
         ));
     }
 
-    /**
-     * Lightweight customer search for transaction forms.
-     * Query by name, account number, or citizenship number.
-     */
     public function searchCustomers(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -97,20 +67,10 @@ class CustomerController extends Controller
             return response()->json([]);
         }
 
-        $customers = Customer::query()
-            ->select('id', 'first_name', 'last_name', 'account_number', 'account_type', 'opening_balance', 'overdraft_enabled', 'overdraft_limit', 'status')
-            ->where(function ($sub) use ($q) {
-                $sub
-                    ->where('first_name', 'like', "%{$q}%")
-                    ->orWhere('middle_name', 'like', "%{$q}%")
-                    ->orWhere('last_name', 'like', "%{$q}%")
-                    ->orWhereRaw("CONCAT(first_name,' ',last_name) like ?", ["%{$q}%"])
-                    ->orWhere('account_number', 'like', "%{$q}%")
-                    ->orWhereHas('documents', function ($doc) use ($q) {
-                        $doc->where('document_type', 'citizenship')
-                            ->where('document_number', 'like', "%{$q}%");
-                    });
-            })
+        $customers = Customer::search($q)   //this is scope search in customer model
+            ->where('status', 'active')
+            ->where('is_frozen', false)
+            ->select('id', 'first_name', 'last_name', 'account_number', 'account_type', 'balance', 'status')
             ->orderBy('id', 'desc')
             ->limit(10)
             ->get();
@@ -123,9 +83,7 @@ class CustomerController extends Controller
                 'account_number' => $c->account_number,
                 'status' => $c->status,
                 'account_type' => $c->account_type,
-                'opening_balance' => (float) ($c->opening_balance ?? 0),
-                'overdraft_enabled' => (bool) ($c->overdraft_enabled ?? false),
-                'overdraft_limit' => (float) ($c->overdraft_limit ?? 0),
+                'balance' => (float) ($c->balance ?? 0),
             ];
         });
 

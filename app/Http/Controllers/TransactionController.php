@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Transfer;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class TransactionController extends Controller
         $this->transactions = $transactions;
     }
 
-    // ============ Deposit ============
+    // ============ Deposit =============
     public function depositForm()
     {
         $customers = Customer::where('status', 'active')->get();
@@ -59,14 +60,9 @@ class TransactionController extends Controller
         try {
             $result = $this->transactions->withdraw($validated);
             $transaction = $result['transaction'];
-            $requiresApproval = $result['requiresApproval'];
-
-            $message = $requiresApproval
-                ? "Withdrawal request submitted for approval. Reference: {$transaction->reference_number}"
-                : "Withdrawal of {$validated['amount']} processed successfully. Reference: {$transaction->reference_number}";
 
             return redirect()->route('teller.withdrawal')
-                ->with('success', $message);
+                ->with('success', "Withdrawal of {$validated['amount']} processed successfully. Reference: {$transaction->reference_number}");
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -90,12 +86,12 @@ class TransactionController extends Controller
 
         try {
             $result = $this->transactions->transfer($validated);
-            $transaction = $result['transaction'];
+            $transfer = $result['transfer'];
             $requiresApproval = $result['requiresApproval'];
 
             $message = $requiresApproval
-                ? "Transfer request submitted for approval. Reference: {$transaction->reference_number}"
-                : "Transfer of {$validated['amount']} processed successfully. Reference: {$transaction->reference_number}";
+                ? "Transfer request submitted for approval. Reference: {$transfer->reference_number}"
+                : "Transfer of {$validated['amount']} processed successfully. Reference: {$transfer->reference_number}";
 
             return redirect()->route('teller.transfer')
                 ->with('success', $message);
@@ -110,7 +106,11 @@ class TransactionController extends Controller
         $transactions = Transaction::with('customer', 'createdBy', 'approvedBy')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
-        return view('dashboard.teller.history', compact('transactions'));
+        $transfers = Transfer::with(['fromCustomer', 'toCustomer', 'createdBy', 'approvedBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20, ['*'], 'transfers');
+
+        return view('dashboard.teller.history', compact('transactions', 'transfers'));
     }
 
     // ============ Approval (Manager only) ============
@@ -120,7 +120,12 @@ class TransactionController extends Controller
             ->with('customer', 'createdBy')
             ->orderBy('created_at', 'asc')
             ->paginate(20);
-        return view('dashboard.teller.approvals', compact('transactions'));
+        $transfers = Transfer::where('status', 'pending')
+            ->with(['fromCustomer', 'toCustomer', 'createdBy'])
+            ->orderBy('created_at', 'asc')
+            ->paginate(20, ['*'], 'transfers');
+
+        return view('dashboard.teller.approvals', compact('transactions', 'transfers'));
     }
 
     public function approveTransaction(Request $request, $transactionId)
@@ -146,6 +151,34 @@ class TransactionController extends Controller
             $this->transactions->reject($transaction, auth()->id(), $validated['reason']);
 
             return back()->with('success', 'Transaction rejected.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function approveTransfer(Request $request, $transferId)
+    {
+        try {
+            $transfer = Transfer::with(['fromCustomer', 'toCustomer'])->findOrFail($transferId);
+            $this->transactions->approveTransfer($transfer, auth()->id());
+
+            return back()->with('success', 'Transfer approved successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function rejectTransfer(Request $request, $transferId)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $transfer = Transfer::findOrFail($transferId);
+            $this->transactions->rejectTransfer($transfer, auth()->id(), $validated['reason']);
+
+            return back()->with('success', 'Transfer rejected.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

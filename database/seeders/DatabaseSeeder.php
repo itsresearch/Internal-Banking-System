@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,30 +17,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create test users with different usertypes
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'usertype' => 'admin',
-            'status' => 'active'
-        ]);
+        $managerRole = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
+        $staffRole = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
 
-        User::create([
-            'name' => 'Manager User',
-            'email' => 'manager@example.com',
-            'password' => Hash::make('password'),
-            'usertype' => 'manager',
-            'status' => 'active'
-        ]);
+        $manager = User::updateOrCreate(
+            ['email' => 'manager@gmail.com'],
+            [
+                'name' => 'manager',
+                'password' => Hash::make('manager123'),
+                'status' => 'active',
+            ]
+        );
+        $manager->syncRoles([$managerRole]);
 
-        User::create([
-            'name' => 'Staff User',
-            'email' => 'staff@example.com',
-            'password' => Hash::make('password'),
-            'usertype' => 'staff',
-            'status' => 'active'
-        ]);
+        $staff = User::updateOrCreate(
+            ['email' => 'staff@gmail.com'],
+            [
+                'name' => 'staff',
+                'password' => Hash::make('staff123'),
+                'status' => 'active',
+            ]
+        );
+        $staff->syncRoles([$staffRole]);
     }
 }
 

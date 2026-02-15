@@ -6,18 +6,16 @@ use App\Http\Controllers\CustomerDocumentController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TellerController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ManagerController;
 
 
 Route::get('/', function () {
     if (auth()->check()) {
         $user = auth()->user();
-        $usertype = $user->usertype;
 
-        if ($usertype === 'admin') {
-            return redirect()->route('dashboard.admin');
-        } elseif ($usertype === 'manager') {
+        if ($user->hasRole('manager')) {
             return redirect()->route('dashboard.manager');
-        } elseif ($usertype === 'staff') {
+        } elseif ($user->hasRole('staff')) {
             return redirect()->route('dashboard.staff');
         }
     }
@@ -29,74 +27,80 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    // Admin Dashboard
-    // Route::get('/dashboard', function () {
-    //     return view('dashboard');
-    // })->name('dashboard');
-
-    Route::get('/admin', function () {
-        return view('dashboard.admin.admin');
-    })->name('dashboard.admin');
 
     // Manager Dashboard
-    Route::get('/manager', function () {
-        return view('dashboard.manager.manager');
-    })->name('dashboard.manager');
+    Route::get('/manager', [ManagerController::class, 'dashboard'])->name('dashboard.manager');
 
     // Staff Dashboard
-    Route::get('/staff', function () {
-        return view('dashboard.staff.staff');
-    })->name('dashboard.staff');
+    Route::get('/staff', [StaffController::class, 'dashboard'])->name('dashboard.staff');
 });
 
-Route::middleware(['auth'])->controller(StaffController::class)->group(function () {
-    Route::get('/customers/create', 'create')->name('customers.create');
-    Route::post('/customers', 'store')->name('customers.store');
-    Route::get('/customers', 'index')->name('customers.index');
-    Route::put('/customers/{id}', 'update')->name('customers.update')->whereNumber('id');
-    // Keep this numeric constraint so it doesn't conflict with /customers/search
-    Route::get('/customers/{id}', 'show')->name('customers.show')->whereNumber('id');
+Route::middleware(['auth', 'role:manager|staff'])->prefix('customers')->name('customers.')->controller(StaffController::class)->group(function () {
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/', 'index')->name('index');
+        Route::put('/{id}', 'update')->name('update')->whereNumber('id');
+        Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id');
+        Route::get('/deleted', 'deleted')->name('deleted');
+        Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+    });
+
+
+Route::middleware(['auth', 'role:manager|staff'])->prefix('customers')->name('customers.')->controller(CustomerDocumentController::class)->group(function () {
+    Route::get('/{id}/documents', 'documents_create')->name('documents.create')->whereNumber('id');
+    Route::post('/documents', 'documents_store')->name('documents.store');
+    Route::get('/documents/verify', 'customers_verify')->name('verify');
+    Route::post('/verify/confirm', 'verify_confirm')->name('verify.confirm');
 });
 
-Route::middleware(['auth'])->controller(CustomerDocumentController::class)->group(function () {
-    Route::get('/customers/{id}/documents', 'documents_create')->name('customers.documents.create')->whereNumber('id');
-    Route::post('/customers/documents', 'documents_store')->name('customers.documents.store');
-    Route::get('/customers/documents/verify', 'customers_verify')->name('customers.verify');
-    Route::post('/customers/verify/confirm', 'verify_confirm')->name('customers.verify.confirm');
-});
-
-Route::middleware(['auth'])->controller(CustomerController::class)->group(function () {
+Route::middleware(['auth', 'role:manager|staff'])->controller(CustomerController::class)->group(function () {
     Route::get('/customers-list', 'customersList')->name('customers.customersList');
     Route::get('/customers/{id}/details','customerDetails')->name('customers.customerDetails')->whereNumber('id');
     Route::get('/customers/search', 'searchCustomers')->name('customers.search');
 });
 
-Route::middleware(['auth'])->controller(TellerController::class)->group(function () {
-    // Deposit routes
-    Route::get('/teller/deposit', 'depositForm')->name('teller.deposit');
-
-    // Withdrawal routes
-    Route::get('/teller/withdrawal', 'withdrawalForm')->name('teller.withdrawal');
-
-    // Transfer routes
-    Route::get('/teller/transfer', 'transferForm')->name('teller.transfer');
+Route::middleware(['auth', 'role:staff'])->prefix('teller')->name('teller.')->controller(TellerController::class)->group(function () {
+    Route::get('/deposit', 'depositForm')->name('deposit');
+    Route::get('/withdrawal', 'withdrawalForm')->name('withdrawal');
+    Route::get('/transfer', 'transferForm')->name('transfer');
 });
 
-Route::middleware(['auth'])->controller(TransactionController::class)->group(function () {
-    // Deposit routes
-    Route::post('/teller/deposit', 'storeDeposit')->name('teller.deposit.store');
-
-    // Withdrawal routes
-    Route::post('/teller/withdrawal', 'storeWithdrawal')->name('teller.withdrawal.store');
-
-    // Transfer routes
-    Route::post('/teller/transfer', 'storeTransfer')->name('teller.transfer.store');
-
-    // Transaction history
-    Route::get('/teller/history', 'history')->name('teller.history');
-
-    // Approval routes (manager)
-    Route::get('/teller/approvals', 'pendingApprovals')->name('teller.approvals');
-    Route::post('/teller/approve/{id}', 'approveTransaction')->name('teller.approve');
-    Route::post('/teller/reject/{id}', 'rejectTransaction')->name('teller.reject');
+Route::middleware(['auth', 'role:staff'])->prefix('teller')->name('teller.')->controller(TransactionController::class)->group(function () {
+    Route::post('/deposit', 'storeDeposit')->name('deposit.store');
+    Route::post('/withdrawal', 'storeWithdrawal')->name('withdrawal.store');
+    Route::post('/transfer', 'storeTransfer')->name('transfer.store');
+    Route::get('/history', 'history')->name('history');
+    Route::get('/approvals', 'pendingApprovals')->name('approvals');
+    Route::post('/approve/{id}', 'approveTransaction')->name('approve');
+    Route::post('/reject/{id}', 'rejectTransaction')->name('reject');
+    Route::post('/transfers/{transfer}/approve', 'approveTransfer')->name('transfers.approve');
+    Route::post('/transfers/{transfer}/reject', 'rejectTransfer')->name('transfers.reject');
 });
+
+Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->controller(ManagerController::class)->group(function () {
+    Route::get('/approvals/accounts', 'accountApprovals')->name('approvals.accounts');
+    Route::post('/approvals/accounts/{customer}/approve', 'approveAccount')->name('approvals.accounts.approve');
+    Route::post('/approvals/accounts/{customer}/reject', 'rejectAccount')->name('approvals.accounts.reject');
+
+    Route::get('/approvals/transactions', 'transactionApprovals')->name('approvals.transactions');
+    Route::post('/approvals/transactions/{transaction}/approve', 'approveTransaction')->name('approvals.transactions.approve');
+    Route::post('/approvals/transactions/{transaction}/reject', 'rejectTransaction')->name('approvals.transactions.reject');
+    Route::post('/approvals/transfers/{transfer}/approve', 'approveTransfer')->name('approvals.transfers.approve');
+    Route::post('/approvals/transfers/{transfer}/reject', 'rejectTransfer')->name('approvals.transfers.reject');
+
+    Route::get('/monitoring/summary', 'dailySummary')->name('monitoring.summary');
+    Route::get('/monitoring/staff', 'staffActivity')->name('monitoring.staff');
+    Route::get('/monitoring/audits', 'auditTrail')->name('audits');
+
+    Route::get('/customers', 'customers')->name('customers');
+    Route::post('/customers/interest-rate', 'updateSavingsInterestRate')->name('customers.interest-rate');
+    Route::get('/customers/{customer}', 'customerShow')->name('customers.show');
+    Route::delete('/customers/{customer}/force', 'forceDeleteCustomer')->name('customers.force-delete');
+    Route::post('/customers/{customer}/freeze', 'freezeAccount')->name('customers.freeze');
+    Route::post('/customers/{customer}/unfreeze', 'unfreezeAccount')->name('customers.unfreeze');
+
+    Route::get('/exceptions', 'exceptions')->name('exceptions');
+    Route::post('/exceptions/{transaction}/reverse', 'reverseTransaction')->name('exceptions.reverse');
+});
+
+

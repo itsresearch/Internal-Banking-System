@@ -9,8 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements AuditableContract
 {
     use HasApiTokens;
 
@@ -19,6 +22,8 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use Auditable;
+    use HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -29,7 +34,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'usertype',
         'status',
     ];
 
@@ -67,21 +71,13 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Check if user is a specific type.
-     */
-    public function isAdmin(): bool
-    {
-        return $this->usertype === 'admin';
-    }
-
     public function isManager(): bool
     {
-        return $this->usertype === 'manager';
+        return $this->hasRole('manager');
     }
 
     public function isStaff(): bool
     {
-        return $this->usertype === 'staff';
+        return $this->hasRole('staff');
     }
 }

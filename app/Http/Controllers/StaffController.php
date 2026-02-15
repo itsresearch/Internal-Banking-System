@@ -7,22 +7,70 @@ use Illuminate\Http\Request;
 
 class StaffController extends Controller
 {
+    public function dashboard()
+    {
+        $staffId = auth()->id();
+
+        $customersToday = Customer::where('created_by', $staffId)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
+
+        $customersTotal = Customer::where('created_by', $staffId)->count();
+
+        $pendingBusinessAccounts = Customer::where('created_by', $staffId)
+            ->where('status', 'pending')
+            ->count();
+
+        $softDeletedByYou = Customer::onlyTrashed()
+            ->where('created_by', $staffId)
+            ->count();
+
+        $recentCustomers = Customer::where('created_by', $staffId)
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get();
+
+        return view('dashboard.staff.staff', compact(
+            'customersToday',
+            'customersTotal',
+            'pendingBusinessAccounts',
+            'softDeletedByYou',
+            'recentCustomers'
+        ));
+    }
+
     public function create()
     {
-        return view('dashboard.staff.staff');
+        return view('dashboard.staff.customers_create');
     }
 
     public function index()
     {
-        // Placeholder: reuse creation form until a listing page is designed
-        return view('dashboard.staff.staff');
+        return redirect()->route('customers.customersList');
+    }
+
+    public function deleted()
+    {
+        $customers = Customer::onlyTrashed()
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20);
+
+        return view('dashboard.customer.deleted_customers', compact('customers'));
     }
 
     public function show($id)
     {
-        $customer = Customer::with('documents')->findOrFail($id);
+        $customer = Customer::with(['documents', 'businessAccount'])->findOrFail($id);
 
         return view('dashboard.customer.verify', compact('customer'));
+    }
+
+    public function destroy($id)
+    {
+        $customer = Customer::findOrFail($id);
+        $customer->delete();
+
+        return back()->with('success', 'Customer moved to deleted list.');
     }
 
     // Store customer
@@ -31,19 +79,16 @@ class StaffController extends Controller
         $validated = $request->validate([
             'account_holder_type' => 'required|in:individual,business',
             'account_type'        => 'required|in:savings,current',
-            'opening_balance'     => 'required|numeric|min:0',
-            'business_name'       => 'nullable|required_if:account_holder_type,business|string|max:255',
-            'business_pan_vat'    => 'nullable|required_if:account_holder_type,business|string|max:100',
-            'business_phone'      => 'nullable|required_if:account_holder_type,business|string|max:50',
-            'business_email'      => 'nullable|required_if:account_holder_type,business|email|max:150',
-            'business_type'       => 'nullable|required_if:account_holder_type,business|in:company,firm,proprietorship,other',
-            'registration_number' => 'nullable|required_if:account_holder_type,business|string|max:150',
-            'business_address'    => 'nullable|required_if:account_holder_type,business|string|max:255',
-            'monthly_withdrawal_limit' => 'nullable|integer|min:0',
-            'overdraft_enabled'   => 'nullable|boolean',
-            'overdraft_limit'     => 'nullable|required_if:overdraft_enabled,1|numeric|min:0',
-            'authorized_signatory'=> 'nullable|required_if:account_type,current|string|max:255',
-            'occupation'          => 'nullable|string|max:150',
+            'balance'             => 'required|numeric|min:0',
+            'business_name'       => 'required|required_if:account_holder_type,business|string|max:255',
+            'business_pan_vat'    => 'required|required_if:account_holder_type,business|string|max:100',
+            'business_phone'      => 'required|required_if:account_holder_type,business|string|max:50',
+            'business_email'      => 'required|required_if:account_holder_type,business|email|max:150',
+            'business_type'       => 'required|required_if:account_holder_type,business|in:company,firm,proprietorship,other',
+            'registration_number' => 'required|required_if:account_holder_type,business|string|max:150',
+            'business_address'    => 'required|required_if:account_holder_type,business|string|max:255',
+            'authorized_signatory'=> 'required|required_if:account_holder_type,business|string|max:255',
+            'occupation'          => 'required|string|max:150',
             'first_name'          => 'required|string|max:100',
             'middle_name'         => 'nullable|string|max:100',
             'last_name'           => 'required|string|max:100',
@@ -55,23 +100,11 @@ class StaffController extends Controller
             'email'               => 'required|email|max:100',
             'permanent_address'   => 'required|string|max:255',
             'temporary_address'   => 'required|string|max:255',
-            'status'              => 'required|in:active,inactive',
         ]);
 
         $validated['customer_code'] = $this->generateCustomerCode();
         $validated['interest_rate'] = $this->defaultInterestRate($validated['account_type']);
         $validated['account_opened_at'] = now();
-
-        if ($validated['account_type'] === 'savings') {
-            $validated['monthly_withdrawal_limit'] = $validated['monthly_withdrawal_limit'] ?? 4; 
-            $validated['overdraft_enabled'] = false;
-            $validated['overdraft_limit'] = null;
-            $validated['authorized_signatory'] = null;
-        } else {
-            $validated['monthly_withdrawal_limit'] = null; 
-            $validated['overdraft_enabled'] = $request->boolean('overdraft_enabled');
-            $validated['overdraft_limit'] = $validated['overdraft_enabled'] ? ($validated['overdraft_limit'] ?? 0.00) : null;
-        }
 
         if ($validated['account_holder_type'] === 'individual') {
             $validated['business_name'] = null;
@@ -81,12 +114,51 @@ class StaffController extends Controller
             $validated['business_type'] = null;
             $validated['registration_number'] = null;
             $validated['business_address'] = null;
+            $validated['authorized_signatory'] = null;
         }
 
         $validated['created_by'] = auth()->id();
+        $validated['status'] = $validated['account_holder_type'] === 'business' ? 'pending' : 'active';  //ternary operator to set status based on account holder type ..... condition ? value_if_true : value_if_false
+
         $validated['account_number'] = $this->generateAccountNumber();
 
-        $customer = Customer::create($validated);
+        $customer = Customer::create([
+            'customer_code' => $validated['customer_code'],
+            'account_number' => $validated['account_number'],
+            'account_type' => $validated['account_type'],
+            'account_holder_type' => $validated['account_holder_type'],
+            'interest_rate' => $validated['interest_rate'],
+            'balance' => $validated['balance'],
+            'minimum_balance' => 0,
+            'account_opened_at' => $validated['account_opened_at'],
+            'occupation' => $validated['occupation'] ?? null,
+            'first_name' => $validated['first_name'],
+            'middle_name' => $validated['middle_name'] ?? null,
+            'last_name' => $validated['last_name'],
+            'fathers_name' => $validated['fathers_name'],
+            'mothers_name' => $validated['mothers_name'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'gender' => $validated['gender'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'permanent_address' => $validated['permanent_address'],
+            'temporary_address' => $validated['temporary_address'],
+            'status' => $validated['status'],
+            'created_by' => $validated['created_by'],
+        ]);
+
+        if ($validated['account_holder_type'] === 'business') {
+            $customer->businessAccount()->create([
+                'business_name' => $validated['business_name'],
+                'business_pan_vat' => $validated['business_pan_vat'],
+                'business_phone' => $validated['business_phone'],
+                'business_email' => $validated['business_email'],
+                'business_type' => $validated['business_type'],
+                'registration_number' => $validated['registration_number'],
+                'business_address' => $validated['business_address'],
+                'authorized_signatory' => $validated['authorized_signatory'],
+            ]);
+        }
 
         return redirect()->route('customers.documents.create', $customer->id);
     }
@@ -99,17 +171,13 @@ class StaffController extends Controller
 
         $validated = $request->validate([
             'email'               => 'required|email|max:100|unique:customers,email,' . $id,
-            'phone'               => 'required|string|max:20',
+            'phone'               => 'required|string|max:10',
             'permanent_address'   => 'required|string|max:255',
             'temporary_address'   => 'required|string|max:255',
-            'nominee_name'        => 'nullable|string|max:255',
-            'nominee_relation'    => 'nullable|string|max:255',
-            'authorized_signatory'=> 'nullable|string|max:255',
-            'status'              => 'required|in:active,inactive',
-            'citizenship_number'  => 'nullable|string|max:50',
-            'citizenship_front'   => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
-            'citizenship_back'    => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
-            'customer_photo'      => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'citizenship_number'  => 'required|string|max:10',
+            'citizenship_front'   => 'required|file|mimes:jpg,jpeg,png',
+            'citizenship_back'    => 'required|file|mimes:jpg,jpeg,png',
+            'customer_photo'      => 'required|file|mimes:jpg,jpeg,png',
         ]);
 
         $customer->update([
@@ -117,19 +185,15 @@ class StaffController extends Controller
             'phone' => $validated['phone'],
             'permanent_address' => $validated['permanent_address'],
             'temporary_address' => $validated['temporary_address'],
-            'nominee_name' => $validated['nominee_name'] ?? null,
-            'nominee_relation' => $validated['nominee_relation'] ?? null,
-            'authorized_signatory' => $validated['authorized_signatory'] ?? null,
-            'status' => $validated['status'],
         ]);
 
-        $citizenshipNumber = $validated['citizenship_number'] ?? null;
+        $citizenshipNumber = $validated['citizenship_number'];
 
         if ($request->hasFile('citizenship_front')) {
             $path = $request->file('citizenship_front')->store('customer_documents', 'public');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'front'],
-                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'citizenship')->where('document_side', 'front')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+                ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]
             );
         }
 
@@ -137,7 +201,7 @@ class StaffController extends Controller
             $path = $request->file('citizenship_back')->store('customer_documents', 'public');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'back'],
-                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'citizenship')->where('document_side', 'back')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+                ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]
             );
         }
 
@@ -145,11 +209,32 @@ class StaffController extends Controller
             $path = $request->file('customer_photo')->store('customer_documents', 'public');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'photo', 'document_side' => null],
-                ['document_number' => $citizenshipNumber ?? ($customer->documents->where('document_type', 'photo')->first()->document_number ?? ''), 'file_path' => $path, 'uploaded_at' => now()]
+                ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]
             );
         }
 
         return redirect()->back()->with('success', 'Customer updated successfully.');
+    }
+
+    private function generateCustomerCode(): string
+    {
+        do {
+            $code = 'CUST-' . strtoupper(str_pad(dechex(random_int(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT));
+        } while (Customer::where('customer_code', $code)->exists());
+
+        return $code;
+    }
+        private function defaultInterestRate(string $accountType): float
+    {
+        if ($accountType !== 'savings') {
+            return 0.00;
+        }
+
+        $rate = Customer::where('account_type', 'savings')
+            ->orderBy('updated_at', 'desc')
+            ->value('interest_rate');
+
+        return $rate !== null ? (float) $rate : 5.00;      //biassed.........................................................................
     }
 
 
@@ -162,19 +247,8 @@ class StaffController extends Controller
         return $accountNumber;
     }
 
-    private function generateCustomerCode(): string
-    {
-        do {
-            $code = 'CUST-' . strtoupper(str_pad(dechex(random_int(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT));
-        } while (Customer::where('customer_code', $code)->exists());
 
-        return $code;
-    }
 
-    private function defaultInterestRate(string $accountType): float
-    {
-        // Demo defaults; manager-managed rates can be wired later
-        return $accountType === 'savings' ? 5.00 : 0.00;
-    }
+
 }
 

@@ -24,7 +24,7 @@
                                     <div class="card-header bg-white">
                                         <h5 class="mb-0">Withdrawal</h5>
                                         <p class="text-muted mb-0" style="font-size: 0.95rem;">
-                                            Requests above NPR 100,000 will route for manager approval.
+                                            Withdrawals post immediately for active accounts.
                                         </p>
                                     </div>
                                     <div class="card-body">
@@ -45,7 +45,8 @@
                                             </div>
                                         @endif
 
-                                        <form id="withdrawalForm" method="POST" action="{{ route('teller.withdrawal.store') }}">
+                                        <form id="withdrawalForm" method="POST"
+                                            action="{{ route('teller.withdrawal.store') }}">
                                             @csrf
                                             <input type="hidden" name="customer_id" id="withdrawCustomerId" required>
                                             <div class="row g-4">
@@ -53,17 +54,22 @@
                                                     <div class="row g-3">
                                                         <div class="col-md-12">
                                                             <label class="form-label">Customer (search)</label>
-                                                            <input id="withdrawSearch" type="text" class="form-control"
+                                                            <input id="withdrawSearch" type="text"
+                                                                class="form-control"
                                                                 placeholder="Search by name, account number, or citizenship number"
                                                                 autocomplete="off" required>
-                                                            <div class="helper-text mt-1">Select a customer to populate the summary.</div>
-                                                            <div id="withdrawSearchResults" class="list-group mt-2" style="display:none;"></div>
+                                                            <div class="helper-text mt-1">Select a customer to populate
+                                                                the summary.</div>
+                                                            <div id="withdrawSearchResults" class="list-group mt-2"
+                                                                style="display:none;"></div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <label class="form-label">Amount</label>
                                                             <input type="number" name="amount" class="form-control"
-                                                                step="0.01" min="10" placeholder="0.00" required>
-                                                            <div class="helper-text mt-1">Enter amount in NPR (min NPR 10).</div>
+                                                                step="0.01" min="10" placeholder="0.00"
+                                                                required>
+                                                            <div class="helper-text mt-1">Enter amount in NPR (min NPR
+                                                                10).</div>
                                                         </div>
                                                         <div class="col-md-12">
                                                             <label class="form-label">Notes</label>
@@ -74,11 +80,11 @@
                                                 <div class="col-lg-5">
                                                     <div class="p-3 border rounded-3 bg-light">
                                                         <div class="section-title">Account summary</div>
-                                                        <div class="helper-text mb-2">Populates after you select a customer.</div>
+                                                        <div class="helper-text mb-2">Populates after you select a
+                                                            customer.</div>
                                                         <div id="withdrawSummary" class="text-muted">
                                                             <div>Balance: —</div>
                                                             <div>Type: —</div>
-                                                            <div>Overdraft: —</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -131,7 +137,7 @@
     <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
     <script src="{{ asset('assets/js/main.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('withdrawalForm');
             const searchInput = document.getElementById('withdrawSearch');
             const results = document.getElementById('withdrawSearchResults');
@@ -141,7 +147,10 @@
             function formatCurrency(val) {
                 const num = Number(val);
                 if (Number.isNaN(num)) return '—';
-                return 'NPR ' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return 'NPR ' + num.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             }
 
             let debounceTimer = null;
@@ -159,16 +168,17 @@
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'list-group-item list-group-item-action';
-                    btn.innerHTML = `<div class="fw-semibold">${item.name}</div>
-                        <div class="text-muted" style="font-size:0.9rem;">${item.account_number || '—'} • ${item.account_type || '—'} • Balance: ${formatCurrency(item.opening_balance)}</div>`;
+                    btn.innerHTML =
+                        `<div class="fw-semibold">${item.name}</div>
+                        <div class="text-muted" style="font-size:0.9rem;">${item.account_number || '—'} • ${item.account_type || '—'} • Balance: ${formatCurrency(item.balance)}</div>`;
                     btn.addEventListener('click', () => {
                         if (customerIdInput) customerIdInput.value = item.id;
-                        if (searchInput) searchInput.value = `${item.name} (${item.account_number || '—'})`;
+                        if (searchInput) searchInput.value =
+                            `${item.name} (${item.account_number || '—'})`;
                         if (summary) {
                             summary.innerHTML = `
-                                <div>Balance: <strong>${formatCurrency(item.opening_balance)}</strong></div>
+                                <div>Balance: <strong>${formatCurrency(item.balance)}</strong></div>
                                 <div>Type: <strong>${(item.account_type || '—').toUpperCase()}</strong></div>
-                                <div>Overdraft: <strong>${item.overdraft_enabled ? 'Enabled up to ' + formatCurrency(item.overdraft_limit) : 'Not allowed'}</strong></div>
                             `;
                         }
                         results.style.display = 'none';
@@ -181,13 +191,17 @@
             async function runSearch(q) {
                 const url = new URL("{{ route('customers.search') }}", window.location.origin);
                 url.searchParams.set('q', q);
-                const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+                const res = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
                 if (!res.ok) return [];
                 return await res.json();
             }
 
             if (searchInput && results) {
-                searchInput.addEventListener('input', function () {
+                searchInput.addEventListener('input', function() {
                     const q = (searchInput.value || '').trim();
                     if (q.length < 2) {
                         results.style.display = 'none';
@@ -202,7 +216,7 @@
                     }, 250);
                 });
 
-                document.addEventListener('click', function (e) {
+                document.addEventListener('click', function(e) {
                     if (!results.contains(e.target) && e.target !== searchInput) {
                         results.style.display = 'none';
                     }
@@ -210,7 +224,7 @@
             }
 
             if (form) {
-                form.addEventListener('submit', function (e) {
+                form.addEventListener('submit', function(e) {
                     if (customerIdInput && !customerIdInput.value) {
                         e.preventDefault();
                         alert('Please search and select a customer first.');

@@ -18,276 +18,134 @@
                 <div class="content-wrapper">
                     <!-- Content -->
                     <div class="container-xxl flex-grow-1 container-p-y">
-                        <div class="row">
+                        <div class="row g-3">
                             <div class="col-12">
-                                <div class="card">
-                                    @if ($errors->any())
-                                        <div class="alert alert-danger m-3">
-                                            <div class="fw-semibold mb-2">Please fix the highlighted errors:</div>
-                                            <ul class="mb-0">
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @endif
-
-                                    <form method="POST" action="{{ route('customers.store') }}">
-                                        @csrf
-
-                                        <div class="card shadow-sm">
-                                            <div class="card-header bg-primary text-white">
-                                                <h5 class="mb-0">Customer Information</h5>
+                                <div class="card shadow-soft">
+                                    <div class="card-body">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                            <div>
+                                                <h5 class="card-title text-primary mb-1">Staff Dashboard</h5>
+                                                <p class="text-muted mb-0">Quick access to daily work and customer flow.</p>
                                             </div>
-
-                                            <div class="card-body">
-
-
-                                                <!-- Account Holder & Type -->
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Account Holder Type</label>
-                                                        <select name="account_holder_type" id="accountHolderType"
-                                                            class="form-select" required>
-                                                            <option value="individual" selected>Individual</option>
-                                                            <option value="business">Business</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Account Type</label>
-                                                        <select name="account_type" id="accountType" class="form-select"
-                                                            required>
-                                                            <option value="savings" selected>Savings Account</option>
-                                                            <option value="current">Current Account</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Common balances -->
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Opening Balance</label>
-                                                        <input type="number" name="opening_balance"
-                                                            class="form-control" step="0.01" min="0"
-                                                            placeholder="e.g. 1000" required>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Savings-specific (info) -->
-                                                <div id="savingsFields" class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Interest Rate </label>
-                                                        <input type="text" class="form-control" value="5%"
-                                                            readonly>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Account Opening Date</label>
-                                                        <input type="text" class="form-control"
-                                                            value="{{ now()->toDateString() }}" readonly>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Current-specific -->
-                                                <div id="currentFields" class="row" style="display: none;">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Overdraft Facility</label>
-                                                        <select name="overdraft_enabled" id="overdraftEnabled"
-                                                            class="form-select">
-                                                            <option value="0" selected>No</option>
-                                                            <option value="1">Yes</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3" id="overdraftLimitField"
-                                                        style="display: none;">
-                                                        <label class="form-label">Overdraft Limit</label>
-                                                        <input type="number" name="overdraft_limit"
-                                                            class="form-control" step="0.01" min="0"
-                                                            placeholder="e.g. 5000">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Authorized Signatory</label>
-                                                        <input type="text" name="authorized_signatory"
-                                                            class="form-control"
-                                                            placeholder="Name of authorized signatory">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Account Opening Date</label>
-                                                        <input type="text" class="form-control"
-                                                            value="{{ now()->toDateString() }}" readonly>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Individual Extras -->
-                                                <div id="individualExtras" class="row">
-                                                    <!-- Additional individual-only fields can go here -->
-                                                </div>
-
-                                                <!-- Business Details -->
-                                                <div id="businessFields" class="row" style="display: none;">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Business Name</label>
-                                                        <input type="text" name="business_name" class="form-control"
-                                                            placeholder="Company or firm name">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Business Type</label>
-                                                        <select name="business_type" class="form-select">
-                                                            <option value="">Select type</option>
-                                                            <option value="company">Company</option>
-                                                            <option value="firm">Firm</option>
-                                                            <option value="proprietorship">Proprietorship</option>
-                                                            <option value="other">Other</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Registration Number</label>
-                                                        <input type="text" name="registration_number"
-                                                            class="form-control" placeholder="Registration no.">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">PAN / VAT</label>
-                                                        <input type="text" name="business_pan_vat"
-                                                            class="form-control" placeholder="PAN / VAT number">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Business Phone</label>
-                                                        <input type="text" name="business_phone"
-                                                            class="form-control" placeholder="Company contact number">
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Business Email</label>
-                                                        <input type="email" name="business_email"
-                                                            class="form-control" placeholder="accounts@company.com">
-                                                    </div>
-                                                    <div class="col-md-12 mb-3">
-                                                        <label class="form-label">Business Address</label>
-                                                        <input type="text" name="business_address"
-                                                            class="form-control"
-                                                            placeholder="Registered office address">
-                                                    </div>
-                                                </div>
-
-                                                <!-- Names -->
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">First Name</label>
-                                                        <input type="text" name="first_name" class="form-control"
-                                                            required>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Middle Name</label>
-                                                        <input type="text" name="middle_name"
-                                                            class="form-control">
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Last Name</label>
-                                                        <input type="text" name="last_name" class="form-control"
-                                                            required>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Parents -->
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Father's Name</label>
-                                                        <input type="text" name="fathers_name"
-                                                            class="form-control" required>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Mother's Name</label>
-                                                        <input type="text" name="mothers_name"
-                                                            class="form-control" required>
-                                                    </div>
-                                                </div>
-
-                                                <!-- DOB & Gender -->
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Date of Birth</label>
-                                                        <input type="date" name="date_of_birth"
-                                                            class="form-control" required>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Gender</label>
-                                                        <select name="gender" class="form-select" required>
-                                                            <option value="">-- Select Gender --</option>
-                                                            <option value="male">Male</option>
-                                                            <option value="female">Female</option>
-                                                            <option value="other">Other</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Contact -->
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Phone</label>
-                                                        <input type="text" name="phone" class="form-control"
-                                                            required>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label class="form-label">Email</label>
-                                                        <input type="email" name="email" class="form-control"
-                                                            required>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Address -->
-                                                <div class="mb-3">
-                                                    <label class="form-label">Permanent Address</label>
-                                                    <input type="text" name="permanent_address"
-                                                        class="form-control" required>
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label class="form-label">Temporary Address</label>
-                                                    <input type="text" name="temporary_address"
-                                                        class="form-control" required>
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label class="form-label">Occupation</label>
-                                                    <input type="text" name="occupation" class="form-control"
-                                                        placeholder="e.g. Engineer">
-                                                </div>
-
-                                                <!-- Status -->
-                                                <div class="mb-3">
-                                                    <label class="form-label">Status</label>
-                                                    <select name="status" class="form-select">
-                                                        <option value="active" selected>Active</option>
-                                                        <option value="inactive">Inactive</option>
-                                                    </select>
-                                                </div>
-
-                                                <!-- System info (read-only) -->
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Customer ID</label>
-                                                        <input type="text" class="form-control"
-                                                            value="Auto after save" readonly>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Customer Code</label>
-                                                        <input type="text" class="form-control"
-                                                            value="Auto generated" readonly>
-                                                    </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Created By (Staff)</label>
-                                                        <input type="text" class="form-control"
-                                                            value="{{ auth()->id() }}" readonly>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="card-footer text-end">
-                                                <button type="submit" class="btn btn-primary">
-                                                    Save Customer
-                                                </button>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a href="{{ route('customers.create') }}" class="btn btn-primary">
+                                                    Add customer
+                                                </a>
+                                                <a href="{{ route('customers.customersList') }}" class="btn btn-outline-primary">
+                                                    Browse customers
+                                                </a>
                                             </div>
                                         </div>
-                                    </form>
 
+                                        <div class="row g-3 mt-3">
+                                            <div class="col-md-3">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Customers created today</div>
+                                                    <div class="fs-4 fw-semibold">{{ $customersToday ?? 0 }}</div>
+                                                    <div class="small text-muted">Since {{ now()->startOfDay()->format('H:i') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Total customers created</div>
+                                                    <div class="fs-4 fw-semibold">{{ $customersTotal ?? 0 }}</div>
+                                                    <div class="small text-muted">All time (your account)</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Pending business approvals</div>
+                                                    <div class="fs-4 fw-semibold">{{ $pendingBusinessAccounts ?? 0 }}</div>
+                                                    <div class="small text-muted">Waiting for manager</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Moved to deleted</div>
+                                                    <div class="fs-4 fw-semibold">{{ $softDeletedByYou ?? 0 }}</div>
+                                                    <div class="small text-muted">Soft-deleted by you</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-lg-5">
+                                                <div class="card border h-100">
+                                                    <div class="card-body">
+                                                        <h6 class="mb-2">Quick actions</h6>
+                                                        <p class="text-muted mb-3">Common tasks to keep your workflow fast.</p>
+                                                        <div class="d-grid gap-2">
+                                                            <a href="{{ route('customers.create') }}" class="btn btn-primary">
+                                                                Create new customer
+                                                            </a>
+                                                            <a href="{{ route('customers.customersList') }}" class="btn btn-outline-primary">
+                                                                Search / view customers
+                                                            </a>
+                                                            <a href="{{ route('customers.deleted') }}" class="btn btn-outline-danger">
+                                                                View deleted customers
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-7">
+                                                <div class="card border h-100">
+                                                    <div class="card-body">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <div>
+                                                                <h6 class="mb-0">Recent customers</h6>
+                                                                <div class="text-muted small">Latest profiles you created</div>
+                                                            </div>
+                                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('customers.customersList') }}">
+                                                                View all
+                                                            </a>
+                                                        </div>
+
+                                                        <div class="table-responsive">
+                                                            <table class="table align-middle mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Customer</th>
+                                                                        <th>Account</th>
+                                                                        <th>Status</th>
+                                                                        <th class="text-end">Action</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @forelse (($recentCustomers ?? []) as $c)
+                                                                        <tr>
+                                                                            <td>
+                                                                                <div class="fw-semibold">{{ $c->first_name }} {{ $c->last_name }}</div>
+                                                                                <div class="text-muted small">{{ optional($c->created_at)->format('M d, Y H:i') }}</div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div>{{ $c->account_number ?? '—' }}</div>
+                                                                                <div class="text-muted small text-capitalize">{{ $c->account_type ?? '—' }}</div>
+                                                                            </td>
+                                                                            <td class="text-capitalize">{{ $c->status ?? '—' }}</td>
+                                                                            <td class="text-end">
+                                                                                <a class="btn btn-sm btn-outline-primary"
+                                                                                    href="{{ route('customers.documents.create', $c->id) }}">
+                                                                                    Upload docs
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @empty
+                                                                        <tr>
+                                                                            <td colspan="4" class="text-center text-muted">
+                                                                                No customers created yet. Start by creating one.
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforelse
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -335,63 +193,6 @@
 
     <!-- Main JS -->
     <script src="../assets/js/main.js"></script>
-
-    <script>
-        (function() {
-            const holderSelect = document.getElementById('accountHolderType');
-            const businessFields = document.getElementById('businessFields');
-            const accountTypeSelect = document.getElementById('accountType');
-            const savingsFields = document.getElementById('savingsFields');
-            const currentFields = document.getElementById('currentFields');
-            const overdraftEnabled = document.getElementById('overdraftEnabled');
-            const overdraftLimitField = document.getElementById('overdraftLimitField');
-            const individualExtras = document.getElementById('individualExtras');
-            const businessRequiredFields = [
-                document.querySelector('input[name="business_name"]'),
-                document.querySelector('input[name="business_pan_vat"]'),
-                document.querySelector('input[name="business_phone"]'),
-                document.querySelector('input[name="business_email"]'),
-                document.querySelector('select[name="business_type"]'),
-                document.querySelector('input[name="registration_number"]'),
-                document.querySelector('input[name="business_address"]'),
-            ];
-            const authorizedSignatoryField = document.querySelector('input[name="authorized_signatory"]');
-            const overdraftLimitInput = document.querySelector('input[name="overdraft_limit"]');
-
-            function toggleBusinessFields() {
-                const isBusiness = holderSelect.value === 'business';
-                businessFields.style.display = isBusiness ? 'flex' : 'none';
-                individualExtras.style.display = isBusiness ? 'none' : 'flex';
-                businessRequiredFields.forEach((field) => {
-                    if (field) field.required = isBusiness;
-                });
-            }
-
-            function toggleAccountTypeFields() {
-                const isSavings = accountTypeSelect.value === 'savings';
-                savingsFields.style.display = isSavings ? 'flex' : 'none';
-                currentFields.style.display = isSavings ? 'none' : 'flex';
-                if (authorizedSignatoryField) {
-                    authorizedSignatoryField.required = !isSavings;
-                }
-            }
-
-            function toggleOverdraftLimit() {
-                overdraftLimitField.style.display = overdraftEnabled.value === '1' ? 'block' : 'none';
-                if (overdraftLimitInput) {
-                    overdraftLimitInput.required = overdraftEnabled.value === '1';
-                }
-            }
-
-            holderSelect?.addEventListener('change', toggleBusinessFields);
-            accountTypeSelect?.addEventListener('change', toggleAccountTypeFields);
-            overdraftEnabled?.addEventListener('change', toggleOverdraftLimit);
-
-            toggleBusinessFields();
-            toggleAccountTypeFields();
-            toggleOverdraftLimit();
-        })();
-    </script>
 </body>
 
 </html>

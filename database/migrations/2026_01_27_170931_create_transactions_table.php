@@ -12,8 +12,6 @@ return new class extends Migration
 
             $table->string('transaction_code', 50)->unique();
 
-            $table->unsignedBigInteger('account_id');
-
             $table->enum('transaction_type', ['deposit', 'withdraw', 'transfer']);
 
             $table->decimal('amount', 18, 2);
@@ -28,11 +26,6 @@ return new class extends Migration
                   ->default('pending');
 
             $table->dateTime('created_at');
-
-            $table->foreign('account_id')
-                  ->references('id')
-                  ->on('accounts')
-                  ->onDelete('cascade');
 
             $table->foreign('performed_by')
                   ->references('id')

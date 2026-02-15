@@ -24,7 +24,8 @@
                                     <div class="card-header bg-white d-flex align-items-center justify-content-between">
                                         <div>
                                             <h5 class="mb-0">Transaction History</h5>
-                                            <p class="text-muted mb-0" style="font-size: 0.95rem;">Latest 20 transactions, newest first.</p>
+                                            <p class="text-muted mb-0" style="font-size: 0.95rem;">Latest 20
+                                                transactions, newest first.</p>
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -48,19 +49,27 @@
                                                         <tr>
                                                             <td>{{ $transaction->reference_number }}</td>
                                                             <td>
-                                                                <div class="fw-semibold">{{ $transaction->customer->first_name }} {{ $transaction->customer->last_name }}</div>
-                                                                <div class="text-muted" style="font-size: 0.9rem;">{{ $transaction->customer->account_number ?? '—' }}</div>
+                                                                <div class="fw-semibold">
+                                                                    {{ $transaction->customer->first_name }}
+                                                                    {{ $transaction->customer->last_name }}</div>
+                                                                <div class="text-muted" style="font-size: 0.9rem;">
+                                                                    {{ $transaction->customer->account_number ?? '—' }}
+                                                                </div>
                                                             </td>
                                                             <td>
-                                                                <span class="badge {{ $transaction->transaction_type === 'deposit' ? 'status-approved' : ($transaction->transaction_type === 'withdrawal' ? 'status-rejected' : 'status-pending') }}">
+                                                                <span
+                                                                    class="badge {{ $transaction->transaction_type === 'deposit' ? 'status-approved' : ($transaction->transaction_type === 'withdrawal' ? 'status-rejected' : 'status-pending') }}">
                                                                     {{ ucfirst($transaction->transaction_type) }}
                                                                 </span>
                                                             </td>
                                                             <td>NPR {{ number_format($transaction->amount, 2) }}</td>
-                                                            <td>NPR {{ number_format($transaction->balance_before, 2) }}</td>
-                                                            <td>NPR {{ number_format($transaction->balance_after, 2) }}</td>
+                                                            <td>NPR {{ number_format($transaction->balance_before, 2) }}
+                                                            </td>
+                                                            <td>NPR {{ number_format($transaction->balance_after, 2) }}
+                                                            </td>
                                                             <td>
-                                                                <span class="badge
+                                                                <span
+                                                                    class="badge
                                                                     {{ $transaction->status === 'approved' ? 'status-approved' : ($transaction->status === 'pending' ? 'status-pending' : 'status-rejected') }}">
                                                                     {{ ucfirst($transaction->status) }}
                                                                 </span>
@@ -80,8 +89,69 @@
                                             </table>
                                         </div>
 
+                                        <hr class="my-4">
+                                        <h6 class="mb-3">Transfer History</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Reference #</th>
+                                                        <th>From</th>
+                                                        <th>To</th>
+                                                        <th>Amount</th>
+                                                        <th>Status</th>
+                                                        <th>Teller</th>
+                                                        <th>Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse ($transfers as $transfer)
+                                                        <tr>
+                                                            <td>{{ $transfer->reference_number }}</td>
+                                                            <td>
+                                                                <div class="fw-semibold">
+                                                                    {{ $transfer->fromCustomer?->first_name }}
+                                                                    {{ $transfer->fromCustomer?->last_name }}</div>
+                                                                <div class="text-muted" style="font-size: 0.9rem;">
+                                                                    {{ $transfer->fromCustomer?->account_number ?? '—' }}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="fw-semibold">
+                                                                    {{ $transfer->toCustomer?->first_name }}
+                                                                    {{ $transfer->toCustomer?->last_name }}</div>
+                                                                <div class="text-muted" style="font-size: 0.9rem;">
+                                                                    {{ $transfer->toCustomer?->account_number ?? '—' }}
+                                                                </div>
+                                                            </td>
+                                                            <td>NPR {{ number_format($transfer->amount, 2) }}</td>
+                                                            <td>
+                                                                <span
+                                                                    class="badge
+                                                                    {{ $transfer->status === 'approved' ? 'status-approved' : ($transfer->status === 'pending' ? 'status-pending' : 'status-rejected') }}">
+                                                                    {{ ucfirst($transfer->status) }}
+                                                                </span>
+                                                            </td>
+                                                            <td>{{ $transfer->createdBy->name ?? 'N/A' }}</td>
+                                                            <td>{{ $transfer->created_at->format('Y-m-d H:i') }}
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="7" class="text-center text-muted py-4">
+                                                                No transfers found yet.
+                                                            </td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+
                                         <div class="d-flex justify-content-center">
                                             {{ $transactions->links() }}
+                                        </div>
+                                        <div class="d-flex justify-content-center">
+                                            {{ $transfers->links() }}
                                         </div>
                                     </div>
                                 </div>

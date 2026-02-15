@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class Transaction extends Model
+class Transaction extends Model implements AuditableContract
 {
+    use Auditable;
     protected $fillable = [
         'customer_id',
         'transaction_type', // deposit, withdrawal, transfer
@@ -15,6 +18,13 @@ class Transaction extends Model
         'status', // pending, approved, rejected
         'reference_number',
         'linked_transaction_id', // for transfers
+        'reversal_of',
+        'is_reversal',
+        'reversal_reason',
+        'is_adjustment',
+        'adjustment_reason',
+        'exception_status',
+        'exception_reason',
         'created_by', // teller id
         'approved_by', // manager id
         'rejected_reason',
@@ -22,6 +32,11 @@ class Transaction extends Model
     ];
 
     protected $dates = ['created_at', 'updated_at'];
+
+    protected $casts = [
+        'is_reversal' => 'boolean',
+        'is_adjustment' => 'boolean',
+    ];
 
     public function customer()
     {
@@ -41,6 +56,11 @@ class Transaction extends Model
     public function linkedTransaction()
     {
         return $this->belongsTo(Transaction::class, 'linked_transaction_id');
+    }
+
+    public function reversalOf()
+    {
+        return $this->belongsTo(Transaction::class, 'reversal_of');
     }
 
     public function relatedTransactions()

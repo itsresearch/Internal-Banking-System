@@ -17,7 +17,7 @@ return new class extends Migration
             }
 
             if (!Schema::hasColumn('transactions', 'created_by')) {
-                $table->unsignedBigInteger('created_by')->nullable()->after('account_id');
+                $table->unsignedBigInteger('created_by')->nullable()->after('customer_id');
                 $table->index('created_by');
             }
 
@@ -39,16 +39,6 @@ return new class extends Migration
                 $table->index('updated_at');
             }
         });
-
-        // Backfill customer_id from accounts.customer_id where possible
-        if (Schema::hasColumn('transactions', 'account_id') && Schema::hasColumn('transactions', 'customer_id')) {
-            DB::statement("
-                UPDATE transactions t
-                JOIN accounts a ON a.id = t.account_id
-                SET t.customer_id = a.customer_id
-                WHERE t.customer_id IS NULL
-            ");
-        }
 
         // Backfill created_by from performed_by (old schema)
         if (Schema::hasColumn('transactions', 'performed_by') && Schema::hasColumn('transactions', 'created_by')) {

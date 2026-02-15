@@ -29,39 +29,53 @@
                                             </p>
                                         </div>
                                         <div class="d-flex gap-2">
-                                            <a href="{{ route('teller.deposit') }}" class="btn btn-outline-secondary">Deposit</a>
-                                            <a href="{{ route('teller.withdrawal') }}" class="btn btn-outline-secondary">Withdrawal</a>
-                                            <a href="{{ route('teller.transfer') }}" class="btn btn-outline-secondary">Transfer</a>
-                                            <a href="{{ route('customers.show', $customer->id) }}" class="btn btn-primary">
+                                            <a href="{{ route('teller.deposit') }}"
+                                                class="btn btn-outline-secondary">Deposit</a>
+                                            value="{{ $customer->businessAccount?->business_name ?? 'N/A' }}" readonly>
+                                            class="btn btn-outline-secondary">Withdrawal</a>
+                                            <a href="{{ route('teller.transfer') }}"
+                                                class="btn btn-outline-secondary">Transfer</a>
+                                            <a href="{{ route('customers.show', $customer->id) }}"
+                                                value="{{ $customer->businessAccount?->business_pan_vat ?? 'N/A' }}"
+                                                readonly>
                                                 Edit Customer
                                             </a>
                                         </div>
                                     </div>
-                                    <div class="card-body">
-                                        <div class="row g-3 mb-4">
-                                            <div class="col-md-4">
-                                                <div class="p-3 border rounded-3 bg-light h-100">
-                                                    <div class="section-title">Current balance</div>
-                                                    <div class="fs-4 fw-bold">NPR {{ number_format($currentBalance ?? 0, 2) }}</div>
-                                                    <div class="helper-text">This value is the customer’s `opening_balance` updated by approved transactions.</div>
-                                                </div>
+                                    value="{{ $customer->businessAccount?->business_phone ?? 'N/A' }}" readonly>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4">
+                                            <div class="p-3 border rounded-3 bg-light h-100">
+                                                <div class="section-title">Current balance</div>
+                                                value="{{ $customer->businessAccount?->business_email ?? 'N/A' }}"
+                                                readonly>
+                                                {{ number_format($currentBalance ?? 0, 2) }}
                                             </div>
-                                            <div class="col-md-4">
-                                                <div class="p-3 border rounded-3 bg-light h-100">
-                                                    <div class="section-title">Account status</div>
-                                                    <div class="mt-1">
-                                                        <span class="badge {{ ($customer->status ?? '') === 'active' ? 'status-approved' : 'status-rejected' }}">
-                                                            {{ ucfirst($customer->status ?? 'N/A') }}
-                                                        </span>
+                                            <div class="helper-text">This value is the customer’s
+                                                balance updated by approved transactions.</div>
+                                        </div>
+                                        value="{{ $customer->businessAccount?->business_type ?? 'N/A' }}" readonly>
+                                        <div class="col-md-4">
+                                            <div class="p-3 border rounded-3 bg-light h-100">
+                                                <div class="section-title">Account status</div>
+                                                <div class="mt-1">
+                                                    value="{{ $customer->businessAccount?->registration_number ?? 'N/A' }}"
+                                                    readonly>
+                                                    class="badge {{ ($customer->status ?? '') === 'active' ? 'status-approved' : 'status-rejected' }}">
+                                                    {{ ucfirst($customer->status ?? 'N/A') }}
+                                                    </span>
+                                                    <textarea class="form-control" rows="2" readonly>{{ $customer->businessAccount?->business_address ?? 'N/A' }}</textarea>
+                                                    <div class="helper-text mt-2">Inactive accounts cannot transact.
                                                     </div>
-                                                    <div class="helper-text mt-2">Inactive accounts cannot transact.</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="p-3 border rounded-3 bg-light h-100">
                                                     <div class="section-title">Customer</div>
-                                                    <div class="fw-semibold">{{ $customer->first_name }} {{ $customer->last_name }}</div>
-                                                    <div class="text-muted" style="font-size: 0.95rem;">{{ $customer->account_number ?? 'N/A' }}</div>
+                                                    <div class="fw-semibold">{{ $customer->first_name }}
+                                                        {{ $customer->last_name }}</div>
+                                                    <div class="text-muted" style="font-size: 0.95rem;">
+                                                        {{ $customer->account_number ?? 'N/A' }}</div>
                                                     <div class="helper-text mt-2">{{ $customer->email ?? '' }}</div>
                                                 </div>
                                             </div>
@@ -90,34 +104,14 @@
                                                     value="{{ ucfirst($customer->account_type) }}" readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Opening Balance</label>
+                                                <label class="form-label">Balance</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->opening_balance }}" readonly>
+                                                    value="{{ $customer->balance }}" readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Interest Rate</label>
                                                 <input type="text" class="form-control"
                                                     value="{{ $customer->interest_rate }}" readonly>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Monthly Withdrawal Limit</label>
-                                                <input type="text" class="form-control"
-                                                    value="{{ $customer->monthly_withdrawal_limit ?? 'N/A' }}" readonly>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Overdraft Enabled</label>
-                                                <input type="text" class="form-control"
-                                                    value="{{ $customer->overdraft_enabled ? 'Yes' : 'No' }}" readonly>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Overdraft Limit</label>
-                                                <input type="text" class="form-control"
-                                                    value="{{ $customer->overdraft_limit ?? 'N/A' }}" readonly>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Authorized Signatory</label>
-                                                <input type="text" class="form-control"
-                                                    value="{{ $customer->authorized_signatory ?? 'N/A' }}" readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Account Opened At</label>
@@ -267,7 +261,8 @@
                                         <div class="mt-5">
                                             <div class="d-flex align-items-center justify-content-between mb-2">
                                                 <h6 class="mb-0">Transactions (latest 50)</h6>
-                                                <a href="{{ route('teller.history') }}" class="btn btn-sm btn-outline-secondary">Open full history</a>
+                                                <a href="{{ route('teller.history') }}"
+                                                    class="btn btn-sm btn-outline-secondary">Open full history</a>
                                             </div>
 
                                             <div class="table-responsive">
@@ -287,26 +282,35 @@
                                                     <tbody>
                                                         @forelse ($transactions as $t)
                                                             <tr>
-                                                                <td class="fw-semibold">{{ $t->reference_number }}</td>
+                                                                <td class="fw-semibold">{{ $t->reference_number }}
+                                                                </td>
                                                                 <td>
-                                                                    <span class="badge {{ $t->transaction_type === 'deposit' ? 'status-approved' : ($t->transaction_type === 'withdrawal' ? 'status-rejected' : 'status-pending') }}">
+                                                                    <span
+                                                                        class="badge {{ $t->transaction_type === 'deposit' ? 'status-approved' : ($t->transaction_type === 'withdrawal' ? 'status-rejected' : 'status-pending') }}">
                                                                         {{ ucfirst($t->transaction_type) }}
                                                                     </span>
                                                                 </td>
-                                                                <td class="text-end">NPR {{ number_format($t->amount, 2) }}</td>
-                                                                <td class="text-end">NPR {{ number_format($t->balance_before, 2) }}</td>
-                                                                <td class="text-end">NPR {{ number_format($t->balance_after, 2) }}</td>
+                                                                <td class="text-end">NPR
+                                                                    {{ number_format($t->amount, 2) }}</td>
+                                                                <td class="text-end">NPR
+                                                                    {{ number_format($t->balance_before, 2) }}</td>
+                                                                <td class="text-end">NPR
+                                                                    {{ number_format($t->balance_after, 2) }}</td>
                                                                 <td>
-                                                                    <span class="badge {{ $t->status === 'approved' ? 'status-approved' : ($t->status === 'pending' ? 'status-pending' : 'status-rejected') }}">
+                                                                    <span
+                                                                        class="badge {{ $t->status === 'approved' ? 'status-approved' : ($t->status === 'pending' ? 'status-pending' : 'status-rejected') }}">
                                                                         {{ ucfirst($t->status) }}
                                                                     </span>
                                                                 </td>
                                                                 <td>{{ $t->createdBy->name ?? 'N/A' }}</td>
-                                                                <td>{{ optional($t->created_at)->format('Y-m-d H:i') }}</td>
+                                                                <td>{{ optional($t->created_at)->format('Y-m-d H:i') }}
+                                                                </td>
                                                             </tr>
                                                         @empty
                                                             <tr>
-                                                                <td colspan="8" class="text-center text-muted py-4">No transactions for this customer yet.</td>
+                                                                <td colspan="8"
+                                                                    class="text-center text-muted py-4">No transactions
+                                                                    for this customer yet.</td>
                                                             </tr>
                                                         @endforelse
                                                     </tbody>
@@ -368,8 +372,6 @@
                 const accountTypeSelect = document.getElementById('accountType');
                 const savingsFields = document.getElementById('savingsFields');
                 const currentFields = document.getElementById('currentFields');
-                const overdraftEnabled = document.getElementById('overdraftEnabled');
-                const overdraftLimitField = document.getElementById('overdraftLimitField');
                 const individualExtras = document.getElementById('individualExtras');
 
                 function toggleBusinessFields() {
@@ -384,17 +386,11 @@
                     currentFields.style.display = isSavings ? 'none' : 'flex';
                 }
 
-                function toggleOverdraftLimit() {
-                    overdraftLimitField.style.display = overdraftEnabled.value === '1' ? 'block' : 'none';
-                }
-
                 holderSelect?.addEventListener('change', toggleBusinessFields);
                 accountTypeSelect?.addEventListener('change', toggleAccountTypeFields);
-                overdraftEnabled?.addEventListener('change', toggleOverdraftLimit);
 
                 toggleBusinessFields();
                 toggleAccountTypeFields();
-                toggleOverdraftLimit();
             })();
         </script>
 </body>

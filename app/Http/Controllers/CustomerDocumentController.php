@@ -78,11 +78,6 @@ class CustomerDocumentController extends Controller
     {
         $customerId = $request->input('customer_id');
         $customer = Customer::findOrFail($customerId);
-
-        // Assuming verification sets status to 'verified' or something
-        // For now, just redirect with success message
-        // You can add logic to update status or send email, etc.
-
         return redirect()->route('customers.index')->with('success', 'Customer verified successfully.');
     }
 }

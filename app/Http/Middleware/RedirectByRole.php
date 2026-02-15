@@ -17,13 +17,10 @@ class RedirectByRole
     {
         if (auth()->check()) {
             $user = auth()->user();
-            $role = $user->role ? $user->role->name : null;
 
-            if ($role === 'admin') {
-                return redirect()->route('dashboard.admin');
-            } elseif ($role === 'manager') {
+            if ($user->hasRole('manager')) {
                 return redirect()->route('dashboard.manager');
-            } elseif ($role === 'staff') {
+            } elseif ($user->hasRole('staff')) {
                 return redirect()->route('dashboard.staff');
             }
         }

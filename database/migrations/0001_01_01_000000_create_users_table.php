@@ -18,17 +18,12 @@ return new class extends Migration
             $table->string('email', 100)->unique();
             $table->string('password', 255);
 
-            $table->unsignedBigInteger('role_id');
             $table->enum('status', ['active', 'inactive'])->default('active');
 
             $table->dateTime('last_login_at')->nullable();
 
             $table->timestamps();
 
-            $table->foreign('role_id')
-                  ->references('id')
-                  ->on('roles')
-                  ->onDelete('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

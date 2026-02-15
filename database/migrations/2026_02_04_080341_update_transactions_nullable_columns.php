@@ -14,7 +14,6 @@ return new class extends Migration
     {
         if (Schema::hasTable('transactions')) {
             DB::statement("ALTER TABLE `transactions` MODIFY `transaction_code` varchar(50) NULL");
-            DB::statement("ALTER TABLE `transactions` MODIFY `account_id` bigint unsigned NULL");
             DB::statement("ALTER TABLE `transactions` MODIFY `performed_by` bigint unsigned NULL");
         }
     }
@@ -26,7 +25,6 @@ return new class extends Migration
     {
         if (Schema::hasTable('transactions')) {
             DB::statement("ALTER TABLE `transactions` MODIFY `transaction_code` varchar(50) NOT NULL");
-            DB::statement("ALTER TABLE `transactions` MODIFY `account_id` bigint unsigned NOT NULL");
             DB::statement("ALTER TABLE `transactions` MODIFY `performed_by` bigint unsigned NOT NULL");
         }
     }

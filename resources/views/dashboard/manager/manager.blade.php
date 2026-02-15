@@ -20,28 +20,68 @@
                     <div class="container-xxl flex-grow-1 container-p-y">
                         <div class="row">
                             <div class="col-12">
-                                <div class="card">
+                                <div class="card shadow-soft">
                                     <div class="card-body">
-                                        <h5 class="card-title text-primary mb-3">👔 Welcome to Manager Dashboard!</h5>
-                                        <p class="mb-4">
-                                            You are logged in as a <strong>Manager</strong>. This dashboard provides you
-                                            with access to manage operations, monitor activities, and generate reports.
-                                        </p>
-                                        <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                            <strong>Info:</strong> As a manager, you have elevated permissions to
-                                            oversee team activities and approve requests.
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                                aria-label="Close"></button>
+                                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                            <div>
+                                                <h5 class="card-title text-primary mb-2">Manager Command Center</h5>
+                                                <p class="text-muted mb-0">Approve requests, monitor cash flow, and
+                                                    reverse transactions.</p>
+                                            </div>
+                                            <a href="{{ route('manager.approvals.accounts') }}"
+                                                class="btn btn-outline-primary">Review approvals</a>
                                         </div>
 
-                                        <h6 class="mt-5 mb-3">Manager Functions:</h6>
-                                        <ul class="list-group">
-                                            <li class="list-group-item">📊 View analytics and reports</li>
-                                            <li class="list-group-item">👥 Manage team members</li>
-                                            <li class="list-group-item">✅ Approve pending requests</li>
-                                            <li class="list-group-item">📈 Monitor performance metrics</li>
-                                            <li class="list-group-item">💼 Manage department operations</li>
-                                        </ul>
+                                        <div class="row g-3 mt-3">
+                                            <div class="col-md-4">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Pending accounts</div>
+                                                    <div class="fs-4 fw-semibold">{{ $pendingAccounts }}</div>
+                                                    <a href="{{ route('manager.approvals.accounts') }}"
+                                                        class="small">View queue</a>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Pending transactions</div>
+                                                    <div class="fs-4 fw-semibold">{{ $pendingTransactions }}</div>
+                                                    <a href="{{ route('manager.approvals.transactions') }}"
+                                                        class="small">Review</a>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="text-muted">Frozen accounts</div>
+                                                    <div class="fs-4 fw-semibold">{{ $frozenAccounts }}</div>
+                                                    <a href="{{ route('manager.customers') }}" class="small">Manage</a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mt-3">
+                                            <div class="col-md-6">
+                                                <div class="card border">
+                                                    <div class="card-body">
+                                                        <h6 class="mb-2">Today at a glance</h6>
+                                                        <p class="text-muted mb-3">Daily totals, cash handled, and staff
+                                                            activity.</p>
+                                                        <a href="{{ route('manager.monitoring.summary') }}"
+                                                            class="btn btn-sm btn-primary">Open summary</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card border">
+                                                    <div class="card-body">
+                                                        <h6 class="mb-2">Customer oversight</h6>
+                                                        <p class="text-muted mb-3">Review profiles and apply account
+                                                            holds.</p>
+                                                        <a href="{{ route('manager.customers') }}"
+                                                            class="btn btn-sm btn-outline-primary">Browse customers</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -79,17 +119,17 @@
     <!-- / Layout wrapper -->
 
     <!-- Core JS -->
-    <script src="../assets/vendor/libs/jquery/jquery.js"></script>
-    <script src="../assets/vendor/libs/popper/popper.js"></script>
-    <script src="../assets/vendor/js/bootstrap.js"></script>
-    <script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-    <script src="../assets/vendor/js/menu.js"></script>
+    <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
+    <script src="{{ asset('assets/vendor/libs/popper/popper.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
+    <script src="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
     <!-- endbuild -->
 
     <!-- Vendors JS -->
 
     <!-- Main JS -->
-    <script src="../assets/js/main.js"></script>
+    <script src="{{ asset('assets/js/main.js') }}"></script>
 
     <!-- Page JS -->
 </body>

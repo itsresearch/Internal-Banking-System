@@ -35,16 +35,13 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
-        // Custom redirect after login based on usertype
+        // Custom redirect after login based on role
         Fortify::redirects('login', function () {
             $user = auth()->user();
-            $usertype = $user->usertype;
 
-            if ($usertype === 'admin') {
-                return redirect()->route('dashboard.admin');
-            } elseif ($usertype === 'manager') {
+            if ($user->hasRole('manager')) {
                 return redirect()->route('dashboard.manager');
-            } elseif ($usertype === 'staff') {
+            } elseif ($user->hasRole('staff')) {
                 return redirect()->route('dashboard.staff');
             }
 

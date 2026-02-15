@@ -64,45 +64,37 @@
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Name</label>
                                                         <input type="text" name="business_name" class="form-control"
-                                                            readonly value="{{ $customer->business_name }}"
+                                                            readonly
+                                                            value="{{ $customer->businessAccount?->business_name }}"
                                                             placeholder="Company or firm name">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">PAN / VAT</label>
                                                         <input type="text" name="business_pan_vat"
                                                             class="form-control" readonly
-                                                            value="{{ $customer->business_pan_vat }}"
+                                                            value="{{ $customer->businessAccount?->business_pan_vat }}"
                                                             placeholder="PAN / VAT number">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Phone</label>
                                                         <input type="text" name="business_phone" class="form-control"
-                                                            readonly value="{{ $customer->business_phone }}"
+                                                            readonly
+                                                            value="{{ $customer->businessAccount?->business_phone }}"
                                                             placeholder="Company contact number">
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label">Business Email</label>
                                                         <input type="email" name="business_email" class="form-control"
-                                                            readonly value="{{ $customer->business_email }}"
+                                                            readonly
+                                                            value="{{ $customer->businessAccount?->business_email }}"
                                                             placeholder="accounts@company.com">
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Savings Withdrawal Limit (per
-                                                        month)</label>
-                                                    <input type="number" name="monthly_withdrawal_limit"
-                                                        class="form-control" min="0" readonly
-                                                        value="{{ $customer->monthly_withdrawal_limit }}">
-                                                    {{-- <small class="text-muted">Applies to Savings. For Current, leave
-                                                        blank (unlimited).</small> --}}
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Overdraft Limit (Current)</label>
-                                                    <input type="number" name="overdraft_limit" class="form-control"
-                                                        min="0" step="0.01" readonly
-                                                        value="{{ $customer->overdraft_limit }}">
-                                                    {{-- <small class="text-muted">Applies to Current. Savings has no
-                                                        overdraft.</small> --}}
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Authorized Signatory</label>
+                                                        <input type="text" name="authorized_signatory"
+                                                            class="form-control" readonly
+                                                            value="{{ $customer->businessAccount?->authorized_signatory }}">
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Interest Rate</label>
@@ -192,23 +184,6 @@
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label">Temporary Address</label>
                                                     <textarea name="temporary_address" class="form-control" rows="2" required>{{ $customer->temporary_address }}</textarea>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Nominee Name</label>
-                                                    <input type="text" name="nominee_name" class="form-control"
-                                                        value="{{ $customer->nominee_name }}">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Nominee Relation</label>
-                                                    <input type="text" name="nominee_relation"
-                                                        class="form-control"
-                                                        value="{{ $customer->nominee_relation }}">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Authorized Signatory</label>
-                                                    <input type="text" name="authorized_signatory"
-                                                        class="form-control"
-                                                        value="{{ $customer->authorized_signatory }}">
                                                 </div>
                                             </div>
 

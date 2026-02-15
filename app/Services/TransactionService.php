@@ -3,23 +3,28 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\Transfer;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
+use App\Services\TransactionNotificationService;
 
 class TransactionService
 {
-    private int $approvalLimit = 100000;
+    private int $approvalLimit = 2000000;
+    private TransactionNotificationService $notifier;
+
+    public function __construct(TransactionNotificationService $notifier)
+    {
+        $this->notifier = $notifier;
+    }
 
     public function deposit(array $data): Transaction
     {
         return DB::transaction(function () use ($data) {
             $customer = Customer::findOrFail($data['customer_id']);
+            $this->ensureCustomerActive($customer);
 
-            if ($customer->status !== 'active') {
-                throw new \RuntimeException('Account is not active.');
-            }
-
-            $balanceBefore = $customer->opening_balance;
+            $balanceBefore = $customer->balance;
             $amount = $data['amount'];
             $balanceAfter = $balanceBefore + $amount;
 
@@ -34,7 +39,9 @@ class TransactionService
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            $customer->update(['opening_balance' => $balanceAfter]);
+            $customer->update(['balance' => $balanceAfter]);
+
+            $this->notifier->notify($transaction);
 
             return $transaction;
         });
@@ -44,33 +51,18 @@ class TransactionService
     {
         return DB::transaction(function () use ($data) {
             $customer = Customer::findOrFail($data['customer_id']);
+            $this->ensureCustomerActive($customer);
 
-            if ($customer->status !== 'active') {
-                throw new \RuntimeException('Account is not active.');
-            }
-
-            $balanceBefore = $customer->opening_balance;
+            $balanceBefore = $customer->balance;
             $amount = $data['amount'];
             $balanceAfter = $balanceBefore - $amount;
 
-            if ($customer->account_type === 'savings') {
-                if ($balanceAfter < 0) {
-                    throw new \RuntimeException('Insufficient balance for withdrawal.');
-                }
-            } else {
-                if ($customer->overdraft_enabled && $customer->overdraft_limit) {
-                    if ($balanceAfter < -$customer->overdraft_limit) {
-                        throw new \RuntimeException('Overdraft limit exceeded.');
-                    }
-                } else {
-                    if ($balanceAfter < 0) {
-                        throw new \RuntimeException('Insufficient balance.');
-                    }
-                }
+            if ($balanceAfter < 0) {
+                throw new \RuntimeException('Insufficient balance.');
             }
 
-            $requiresApproval = $amount > $this->approvalLimit;
-            $status = $requiresApproval ? 'pending' : 'approved';
+            $requiresApproval = false;
+            $status = 'approved';
 
             $transaction = $customer->transactions()->create([
                 'transaction_type' => 'withdrawal',
@@ -83,9 +75,9 @@ class TransactionService
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            if ($status === 'approved') {
-                $customer->update(['opening_balance' => $balanceAfter]);
-            }
+            $customer->update(['balance' => $balanceAfter]);
+
+            $this->notifier->notify($transaction);
 
             return [
                 'transaction' => $transaction,
@@ -99,72 +91,46 @@ class TransactionService
         return DB::transaction(function () use ($data) {
             $fromCustomer = Customer::findOrFail($data['from_customer_id']);
             $toCustomer = Customer::findOrFail($data['to_customer_id']);
-
-            if ($fromCustomer->status !== 'active' || $toCustomer->status !== 'active') {
-                throw new \RuntimeException('One or both accounts are not active.');
-            }
+            $this->ensureCustomerActive($fromCustomer);
+            $this->ensureCustomerActive($toCustomer);
 
             $amount = $data['amount'];
-            $debitReferenceNumber = $this->generateReferenceNumber();
-            $creditReferenceNumber = $this->generateReferenceNumber();
+            $referenceNumber = $this->generateTransferReferenceNumber();
 
-            $fromBalanceBefore = $fromCustomer->opening_balance;
+            $fromBalanceBefore = $fromCustomer->balance;
             $fromBalanceAfter = $fromBalanceBefore - $amount;
 
-            if ($fromCustomer->account_type === 'savings') {
-                if ($fromBalanceAfter < 0) {
-                    throw new \RuntimeException('Insufficient balance in source account.');
-                }
-            } else {
-                if ($fromCustomer->overdraft_enabled && $fromCustomer->overdraft_limit) {
-                    if ($fromBalanceAfter < -$fromCustomer->overdraft_limit) {
-                        throw new \RuntimeException('Overdraft limit exceeded in source account.');
-                    }
-                } else {
-                    if ($fromBalanceAfter < 0) {
-                        throw new \RuntimeException('Insufficient balance in source account.');
-                    }
-                }
+            if ($fromBalanceAfter < 0) {
+                throw new \RuntimeException('Insufficient balance in source account.');
             }
 
             $requiresApproval = $amount > $this->approvalLimit;
             $status = $requiresApproval ? 'pending' : 'approved';
 
-            $debitTransaction = $fromCustomer->transactions()->create([
-                'transaction_type' => 'transfer',
-                'amount' => $amount,
-                'balance_before' => $fromBalanceBefore,
-                'balance_after' => $fromBalanceAfter,
-                'status' => $status,
-                'reference_number' => $debitReferenceNumber,
-                'created_by' => auth()->id(),
-                'notes' => "Transfer to {$toCustomer->first_name} {$toCustomer->last_name}. " . ($data['notes'] ?? ''),
-            ]);
-
-            $toBalanceBefore = $toCustomer->opening_balance;
+            $toBalanceBefore = $toCustomer->balance;
             $toBalanceAfter = $toBalanceBefore + $amount;
 
-            $creditTransaction = $toCustomer->transactions()->create([
-                'transaction_type' => 'transfer',
+            $transfer = Transfer::create([
+                'from_customer_id' => $fromCustomer->id,
+                'to_customer_id' => $toCustomer->id,
                 'amount' => $amount,
-                'balance_before' => $toBalanceBefore,
-                'balance_after' => $toBalanceAfter,
+                'from_balance_before' => $fromBalanceBefore,
+                'from_balance_after' => $fromBalanceAfter,
+                'to_balance_before' => $toBalanceBefore,
+                'to_balance_after' => $toBalanceAfter,
                 'status' => $status,
-                'reference_number' => $creditReferenceNumber,
-                'linked_transaction_id' => $debitTransaction->id,
+                'reference_number' => $referenceNumber,
                 'created_by' => auth()->id(),
-                'notes' => "Transfer from {$fromCustomer->first_name} {$fromCustomer->last_name}. " . ($data['notes'] ?? ''),
+                'notes' => $data['notes'] ?? null,
             ]);
 
-            $debitTransaction->update(['linked_transaction_id' => $creditTransaction->id]);
-
             if ($status === 'approved') {
-                $fromCustomer->update(['opening_balance' => $fromBalanceAfter]);
-                $toCustomer->update(['opening_balance' => $toBalanceAfter]);
+                $fromCustomer->update(['balance' => $fromBalanceAfter]);
+                $toCustomer->update(['balance' => $toBalanceAfter]);
             }
 
             return [
-                'transaction' => $debitTransaction,
+                'transfer' => $transfer,
                 'requiresApproval' => $requiresApproval,
             ];
         });
@@ -183,19 +149,10 @@ class TransactionService
             ]);
 
             $customer = $transaction->customer;
-            $customer->update(['opening_balance' => $transaction->balance_after]);
+            $customer->update(['balance' => $transaction->balance_after]);
 
-            if ($transaction->transaction_type === 'transfer' && $transaction->linked_transaction_id) {
-                $linkedTransaction = Transaction::find($transaction->linked_transaction_id);
-                if ($linkedTransaction) {
-                    $linkedTransaction->update([
-                        'status' => 'approved',
-                        'approved_by' => $approverId,
-                    ]);
-                    $linkedCustomer = $linkedTransaction->customer;
-                    $linkedCustomer->update(['opening_balance' => $linkedTransaction->balance_after]);
-                }
-            }
+            $this->notifier->notify($transaction);
+
         });
     }
 
@@ -211,16 +168,39 @@ class TransactionService
             'rejected_reason' => $reason,
         ]);
 
-        if ($transaction->transaction_type === 'transfer' && $transaction->linked_transaction_id) {
-            $linkedTransaction = Transaction::find($transaction->linked_transaction_id);
-            if ($linkedTransaction) {
-                $linkedTransaction->update([
-                    'status' => 'rejected',
-                    'approved_by' => $approverId,
-                    'rejected_reason' => "Linked transaction rejected: {$reason}",
-                ]);
+    }
+
+    public function approveTransfer(Transfer $transfer, int $approverId): void
+    {
+        DB::transaction(function () use ($transfer, $approverId) {
+            if ($transfer->status !== 'pending') {
+                throw new \RuntimeException('Transfer is not pending.');
             }
+
+            $transfer->update([
+                'status' => 'approved',
+                'approved_by' => $approverId,
+            ]);
+
+            $fromCustomer = Customer::findOrFail($transfer->from_customer_id);
+            $toCustomer = Customer::findOrFail($transfer->to_customer_id);
+
+            $fromCustomer->update(['balance' => $transfer->from_balance_after]);
+            $toCustomer->update(['balance' => $transfer->to_balance_after]);
+        });
+    }
+
+    public function rejectTransfer(Transfer $transfer, int $approverId, string $reason): void
+    {
+        if ($transfer->status !== 'pending') {
+            throw new \RuntimeException('Transfer is not pending.');
         }
+
+        $transfer->update([
+            'status' => 'rejected',
+            'approved_by' => $approverId,
+            'rejected_reason' => $reason,
+        ]);
     }
 
     private function generateReferenceNumber(): string
@@ -232,5 +212,26 @@ class TransactionService
         } while (Transaction::where('reference_number', $referenceNumber)->exists());
 
         return $referenceNumber;
+    }
+
+    private function generateTransferReferenceNumber(): string
+    {
+        $prefix = 'TRF-' . date('Ymd');
+        do {
+            $suffix = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $referenceNumber = $prefix . $suffix;
+        } while (Transfer::where('reference_number', $referenceNumber)->exists());
+
+        return $referenceNumber;
+    }
+
+    private function ensureCustomerActive(Customer $customer): void
+    {
+        if ($customer->status !== 'active') {
+            throw new \RuntimeException('Account is not active.');
+        }
+        if ($customer->is_frozen) {
+            throw new \RuntimeException('Account is frozen.');
+        }
     }
 }
