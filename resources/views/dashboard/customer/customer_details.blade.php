@@ -28,44 +28,40 @@
                                                 Account summary and latest activity.
                                             </p>
                                         </div>
-                                        <div class="d-flex gap-2">
+                                        <div class="d-flex gap-2 flex-wrap">
                                             <a href="{{ route('teller.deposit') }}"
                                                 class="btn btn-outline-secondary">Deposit</a>
-                                            value="{{ $customer->businessAccount?->business_name ?? 'N/A' }}" readonly>
-                                            class="btn btn-outline-secondary">Withdrawal</a>
+                                            <a href="{{ route('teller.withdrawal') }}"
+                                                class="btn btn-outline-secondary">Withdrawal</a>
                                             <a href="{{ route('teller.transfer') }}"
                                                 class="btn btn-outline-secondary">Transfer</a>
                                             <a href="{{ route('customers.show', $customer->id) }}"
-                                                value="{{ $customer->businessAccount?->business_pan_vat ?? 'N/A' }}"
-                                                readonly>
-                                                Edit Customer
-                                            </a>
+                                                class="btn btn-primary">Edit Customer</a>
                                         </div>
                                     </div>
-                                    value="{{ $customer->businessAccount?->business_phone ?? 'N/A' }}" readonly>
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-md-4">
-                                            <div class="p-3 border rounded-3 bg-light h-100">
-                                                <div class="section-title">Current balance</div>
-                                                value="{{ $customer->businessAccount?->business_email ?? 'N/A' }}"
-                                                readonly>
-                                                {{ number_format($currentBalance ?? 0, 2) }}
+
+                                    <div class="card-body">
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-4">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="section-title">Current balance</div>
+                                                    <div class="fs-5 fw-semibold mt-1">
+                                                        {{ number_format($currentBalance ?? 0, 2) }}
+                                                    </div>
+                                                </div>
+                                                {{-- <div class="helper-text">This value is the customer’s
+                                                    balance updated by approved transactions.</div> --}}
                                             </div>
-                                            <div class="helper-text">This value is the customer’s
-                                                balance updated by approved transactions.</div>
-                                        </div>
-                                        value="{{ $customer->businessAccount?->business_type ?? 'N/A' }}" readonly>
-                                        <div class="col-md-4">
-                                            <div class="p-3 border rounded-3 bg-light h-100">
-                                                <div class="section-title">Account status</div>
-                                                <div class="mt-1">
-                                                    value="{{ $customer->businessAccount?->registration_number ?? 'N/A' }}"
-                                                    readonly>
-                                                    class="badge {{ ($customer->status ?? '') === 'active' ? 'status-approved' : 'status-rejected' }}">
-                                                    {{ ucfirst($customer->status ?? 'N/A') }}
-                                                    </span>
-                                                    <textarea class="form-control" rows="2" readonly>{{ $customer->businessAccount?->business_address ?? 'N/A' }}</textarea>
-                                                    <div class="helper-text mt-2">Inactive accounts cannot transact.
+                                            <div class="col-md-4">
+                                                <div class="p-3 border rounded-3 bg-light h-100">
+                                                    <div class="section-title">Account status</div>
+                                                    <div class="mt-2">
+                                                        <span
+                                                            class="badge {{ ($customer->status ?? '') === 'active' ? 'status-approved' : 'status-rejected' }}">
+                                                            {{ ucfirst($customer->status ?? 'N/A') }}
+                                                        </span>
+                                                        <div class="helper-text mt-2">Inactive accounts cannot transact.
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -76,7 +72,7 @@
                                                         {{ $customer->last_name }}</div>
                                                     <div class="text-muted" style="font-size: 0.95rem;">
                                                         {{ $customer->account_number ?? 'N/A' }}</div>
-                                                    <div class="helper-text mt-2">{{ $customer->email ?? '' }}</div>
+                                                    <div class="helper-text mt-2">{{ $customer->email ?? 'N/A' }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -192,36 +188,42 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Business Name</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->business_name ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->business_name ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Business PAN/VAT</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->business_pan_vat ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->business_pan_vat ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Business Phone</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->business_phone ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->business_phone ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Business Email</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->business_email ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->business_email ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Business Type</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->business_type ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->business_type ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Registration Number</label>
                                                 <input type="text" class="form-control"
-                                                    value="{{ $customer->registration_number ?? 'N/A' }}" readonly>
+                                                    value="{{ $customer->businessAccount?->registration_number ?? 'N/A' }}"
+                                                    readonly>
                                             </div>
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label">Business Address</label>
-                                                <textarea class="form-control" rows="2" readonly>{{ $customer->business_address ?? 'N/A' }}</textarea>
+                                                <textarea class="form-control" rows="2" readonly>{{ $customer->businessAccount?->business_address ?? 'N/A' }}</textarea>
                                             </div>
                                         </div>
 
@@ -309,7 +311,8 @@
                                                         @empty
                                                             <tr>
                                                                 <td colspan="8"
-                                                                    class="text-center text-muted py-4">No transactions
+                                                                    class="text-center text-muted py-4">No
+                                                                    transactions
                                                                     for this customer yet.</td>
                                                             </tr>
                                                         @endforelse
@@ -365,34 +368,7 @@
         <!-- Main JS -->
         <script src="../assets/js/main.js"></script>
 
-        <script>
-            (function() {
-                const holderSelect = document.getElementById('accountHolderType');
-                const businessFields = document.getElementById('businessFields');
-                const accountTypeSelect = document.getElementById('accountType');
-                const savingsFields = document.getElementById('savingsFields');
-                const currentFields = document.getElementById('currentFields');
-                const individualExtras = document.getElementById('individualExtras');
 
-                function toggleBusinessFields() {
-                    const isBusiness = holderSelect.value === 'business';
-                    businessFields.style.display = isBusiness ? 'flex' : 'none';
-                    individualExtras.style.display = isBusiness ? 'none' : 'flex';
-                }
-
-                function toggleAccountTypeFields() {
-                    const isSavings = accountTypeSelect.value === 'savings';
-                    savingsFields.style.display = isSavings ? 'flex' : 'none';
-                    currentFields.style.display = isSavings ? 'none' : 'flex';
-                }
-
-                holderSelect?.addEventListener('change', toggleBusinessFields);
-                accountTypeSelect?.addEventListener('change', toggleAccountTypeFields);
-
-                toggleBusinessFields();
-                toggleAccountTypeFields();
-            })();
-        </script>
 </body>
 
 </html>

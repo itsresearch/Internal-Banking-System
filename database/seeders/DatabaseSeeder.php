@@ -39,6 +39,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $staff->syncRoles([$staffRole]);
+
+            $this->call([
+                CustomerSeeder::class,
+                TransactionSeeder::class,
+            ]);
     }
 }
 

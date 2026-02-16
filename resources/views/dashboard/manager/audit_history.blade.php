@@ -61,7 +61,7 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="table-responsive">
-                                            <table class="table align-middle">
+                                            <table class="table align-middle table-hover">
                                                 <thead>
                                                     <tr>
                                                         <th>Date</th>
@@ -69,38 +69,97 @@
                                                         <th>Event</th>
                                                         <th>Model</th>
                                                         <th>Record</th>
-                                                        <th>IP</th>
-                                                        <th>Old</th>
-                                                        <th>New</th>
+                                                        <th>Changes</th>
+                                                        <th>Details</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @forelse ($audits as $audit)
                                                         @php
-                                                            $oldValues = $audit->old_values
-                                                                ? json_encode($audit->old_values)
-                                                                : '';
-                                                            $newValues = $audit->new_values
-                                                                ? json_encode($audit->new_values)
-                                                                : '';
+                                                            $oldValues = $audit->old_values ?? [];
+                                                            $newValues = $audit->new_values ?? [];
+                                                            $changedKeys = array_values(
+                                                                array_unique(
+                                                                    array_merge(
+                                                                        array_keys($oldValues),
+                                                                        array_keys($newValues),
+                                                                    ),
+                                                                ),
+                                                            );
+                                                            $changedPreview = implode(
+                                                                ', ',
+                                                                array_slice($changedKeys, 0, 4),
+                                                            );
+                                                            $changedCount = count($changedKeys);
+                                                            $oldJson = $oldValues
+                                                                ? json_encode(
+                                                                    $oldValues,
+                                                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                                                )
+                                                                : 'N/A';
+                                                            $newJson = $newValues
+                                                                ? json_encode(
+                                                                    $newValues,
+                                                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                                                )
+                                                                : 'N/A';
+                                                            $eventClass = match ($audit->event) {
+                                                                'created' => 'status-approved',
+                                                                'updated' => 'status-pending',
+                                                                'deleted' => 'status-rejected',
+                                                                'restored' => 'status-approved',
+                                                                default => 'status-pending',
+                                                            };
                                                         @endphp
                                                         <tr>
                                                             <td>{{ $audit->created_at?->format('M d, Y H:i') }}</td>
                                                             <td>{{ $audit->user?->name ?? 'System' }}</td>
-                                                            <td class="text-capitalize">{{ $audit->event }}</td>
+                                                            <td>
+                                                                <span
+                                                                    class="badge {{ $eventClass }} text-capitalize">
+                                                                    {{ $audit->event }}
+                                                                </span>
+                                                            </td>
                                                             <td>{{ class_basename($audit->auditable_type) }}</td>
                                                             <td>#{{ $audit->auditable_id }}</td>
-                                                            <td>{{ $audit->ip_address ?? '-' }}</td>
                                                             <td class="text-muted">
-                                                                {{ \Illuminate\Support\Str::limit($oldValues, 80) }}
+                                                                @if ($changedCount === 0)
+                                                                    No field changes
+                                                                @else
+                                                                    {{ $changedPreview }}
+                                                                    @if ($changedCount > 4)
+                                                                        <span
+                                                                            class="text-muted">+{{ $changedCount - 4 }}
+                                                                            more</span>
+                                                                    @endif
+                                                                @endif
                                                             </td>
-                                                            <td class="text-muted">
-                                                                {{ \Illuminate\Support\Str::limit($newValues, 80) }}
+                                                            <td>
+                                                                <button class="btn btn-sm btn-outline-secondary"
+                                                                    type="button" data-bs-toggle="collapse"
+                                                                    data-bs-target="#audit-{{ $audit->id }}"
+                                                                    aria-expanded="false">
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr class="collapse bg-light" id="audit-{{ $audit->id }}">
+                                                            <td colspan="7">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-6">
+                                                                        <div class="fw-semibold mb-1">Old values</div>
+                                                                        <pre class="mb-0 small">{{ $oldJson }}</pre>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="fw-semibold mb-1">New values</div>
+                                                                        <pre class="mb-0 small">{{ $newJson }}</pre>
+                                                                    </div>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="8" class="text-center text-muted">No audit
+                                                            <td colspan="7" class="text-center text-muted">No audit
                                                                 entries found for the selected filters.</td>
                                                         </tr>
                                                     @endforelse
