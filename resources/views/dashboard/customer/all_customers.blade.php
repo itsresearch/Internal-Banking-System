@@ -21,16 +21,32 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="card shadow-soft">
-                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                    <div
+                                        class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                                         <div>
                                             <h5 class="mb-0">All Customers</h5>
                                             <div class="text-muted" style="font-size: 0.9rem;">
-                                                Use delete to move a customer into the deleted list (soft delete only).
+                                                Use delete to move a customer into the deleted list.
                                             </div>
                                         </div>
-                                        <a href="{{ route('customers.create') }}" class="btn btn-primary">
-                                            Add Customer
-                                        </a>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <form method="GET" action="{{ route('customers.customersList') }}"
+                                                class="d-flex gap-2">
+                                                <input type="text" name="q"
+                                                    class="form-control form-control-sm"
+                                                    placeholder="Search by name, code, account #"
+                                                    value="{{ $q ?? '' }}">
+                                                <button type="submit"
+                                                    class="btn btn-sm btn-outline-primary">Search</button>
+                                                @if (!empty($q))
+                                                    <a href="{{ route('customers.customersList') }}"
+                                                        class="btn btn-sm btn-outline-secondary">Clear</a>
+                                                @endif
+                                            </form>
+                                            <a href="{{ route('customers.create') }}" class="btn btn-primary">
+                                                Add Customer
+                                            </a>
+                                        </div>
                                     </div>
                                     <div class="table-responsive text-nowrap">
                                         <table class="table table-hover align-middle">
@@ -47,7 +63,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody class="table-border-bottom-0">
-                                                @foreach ($customers as $customer)
+                                                @forelse ($customers as $customer)
                                                     <tr>
                                                         <td>{{ $customer->id }}</td>
                                                         <td>{{ $customer->first_name }}</td>
@@ -73,11 +89,18 @@
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                @endforeach
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="8" class="text-center text-muted py-4">
+                                                            No customers found.
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
                                             </tbody>
                                         </table>
-
-
+                                        <div class="d-flex justify-content-center my-3">
+                                            {{ $customers->links() }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

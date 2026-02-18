@@ -43,13 +43,11 @@
                                             </div>
                                         @endif
 
-                                        <form id="documentForm" method="POST" action="{{ route('customers.documents.store') }}"
+                                        <form id="documentForm" method="POST" action="{{ route('customers.documents.store', $customer->id) }}"
                                             enctype="multipart/form-data">
                                             @csrf
 
                                             <div class="row g-4">
-                                                <input type="hidden" name="customer_id" value="{{ $customer->id }}">
-
                                                 <div class="col-md-6">
                                                     <label class="form-label">Customer (default)</label>
                                                     <input type="text" class="form-control" value="{{ $customer->first_name }} {{ $customer->last_name }} ({{ $customer->account_number }})" readonly>

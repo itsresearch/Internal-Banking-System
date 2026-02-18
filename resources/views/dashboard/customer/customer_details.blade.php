@@ -233,7 +233,7 @@
                                                 <div class="col-md-4 mb-3">
                                                     <div class="fw-semibold mb-2">Photo</div>
                                                     @if ($photo)
-                                                        <img src="{{ asset('storage/' . $photo->file_path) }}"
+                                                        <img src="{{ route('customers.documents.show', $photo->id) }}"
                                                             alt="Customer Photo" class="img-fluid rounded">
                                                     @else
                                                         <div class="text-muted">Not uploaded</div>
@@ -242,7 +242,7 @@
                                                 <div class="col-md-4 mb-3">
                                                     <div class="fw-semibold mb-2">Citizenship (Front)</div>
                                                     @if ($citizenship_front)
-                                                        <img src="{{ asset('storage/' . $citizenship_front->file_path) }}"
+                                                        <img src="{{ route('customers.documents.show', $citizenship_front->id) }}"
                                                             alt="Citizenship Front" class="img-fluid rounded">
                                                     @else
                                                         <div class="text-muted">Not uploaded</div>
@@ -251,7 +251,7 @@
                                                 <div class="col-md-4 mb-3">
                                                     <div class="fw-semibold mb-2">Citizenship (Back)</div>
                                                     @if ($citizenship_back)
-                                                        <img src="{{ asset('storage/' . $citizenship_back->file_path) }}"
+                                                        <img src="{{ route('customers.documents.show', $citizenship_back->id) }}"
                                                             alt="Citizenship Back" class="img-fluid rounded">
                                                     @else
                                                         <div class="text-muted">Not uploaded</div>

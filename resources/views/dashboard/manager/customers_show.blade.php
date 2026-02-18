@@ -16,7 +16,7 @@
                                     <div class="card-body">
                                         <div class="text-center mb-3">
                                             @if ($photo)
-                                                <img src="{{ asset('storage/' . $photo->file_path) }}"
+                                                <img src="{{ route('customers.documents.show', $photo->id) }}"
                                                     class="rounded-circle"
                                                     style="width: 96px; height: 96px; object-fit: cover;"
                                                     alt="Customer photo">
@@ -125,7 +125,7 @@
                                                 <div class="border rounded p-2">
                                                     <div class="text-muted mb-2">Citizenship front</div>
                                                     @if ($citizenshipFront)
-                                                        <img src="{{ asset('storage/' . $citizenshipFront->file_path) }}"
+                                                        <img src="{{ route('customers.documents.show', $citizenshipFront->id) }}"
                                                             class="img-fluid rounded" alt="Citizenship front">
                                                     @else
                                                         <div class="text-muted">Not uploaded</div>
@@ -136,7 +136,7 @@
                                                 <div class="border rounded p-2">
                                                     <div class="text-muted mb-2">Citizenship back</div>
                                                     @if ($citizenshipBack)
-                                                        <img src="{{ asset('storage/' . $citizenshipBack->file_path) }}"
+                                                        <img src="{{ route('customers.documents.show', $citizenshipBack->id) }}"
                                                             class="img-fluid rounded" alt="Citizenship back">
                                                     @else
                                                         <div class="text-muted">Not uploaded</div>

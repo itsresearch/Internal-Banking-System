@@ -47,9 +47,10 @@ Route::middleware(['auth', 'role:manager|staff'])->prefix('customers')->name('cu
 
 
 Route::middleware(['auth', 'role:manager|staff'])->prefix('customers')->name('customers.')->controller(CustomerDocumentController::class)->group(function () {
-    Route::get('/{id}/documents', 'documents_create')->name('documents.create')->whereNumber('id');
-    Route::post('/documents', 'documents_store')->name('documents.store');
+    Route::get('/{customer}/documents', 'documents_create')->name('documents.create')->whereNumber('customer');
+    Route::post('/{customer}/documents', 'documents_store')->name('documents.store');
     Route::get('/documents/verify', 'customers_verify')->name('verify');
+    Route::get('/documents/{document}', 'documents_show')->name('documents.show')->whereNumber('document');
     Route::post('/verify/confirm', 'verify_confirm')->name('verify.confirm');
 });
 

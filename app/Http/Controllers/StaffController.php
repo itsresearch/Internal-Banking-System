@@ -190,7 +190,7 @@ class StaffController extends Controller
         $citizenshipNumber = $validated['citizenship_number'];
 
         if ($request->hasFile('citizenship_front')) {
-            $path = $request->file('citizenship_front')->store('customer_documents', 'public');
+            $path = $request->file('citizenship_front')->store('customer_documents', 'local');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'front'],
                 ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]
@@ -198,7 +198,7 @@ class StaffController extends Controller
         }
 
         if ($request->hasFile('citizenship_back')) {
-            $path = $request->file('citizenship_back')->store('customer_documents', 'public');
+            $path = $request->file('citizenship_back')->store('customer_documents', 'local');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'citizenship', 'document_side' => 'back'],
                 ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]
@@ -206,7 +206,7 @@ class StaffController extends Controller
         }
 
         if ($request->hasFile('customer_photo')) {
-            $path = $request->file('customer_photo')->store('customer_documents', 'public');
+            $path = $request->file('customer_photo')->store('customer_documents', 'local');
             CustomerDocument::updateOrCreate(
                 ['customer_id' => $customer->id, 'document_type' => 'photo', 'document_side' => null],
                 ['document_number' => $citizenshipNumber, 'file_path' => $path, 'uploaded_at' => now()]

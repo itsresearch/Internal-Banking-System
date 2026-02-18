@@ -15,22 +15,15 @@ use Spatie\Permission\Models\Role;
 
 class ManagerController extends Controller
 {
-    private ManagerService $managerService;
+    private ManagerService $managerService;   //from services folder 
     private TransactionService $transactionService;
 
-    public function __construct(ManagerService $managerService, TransactionService $transactionService)
+    public function __construct(ManagerService $managerService, TransactionService $transactionService)  //dependency injection
     {
         $this->managerService = $managerService;
         $this->transactionService = $transactionService;
     }
 
-    //
-    //
-    //
-    //
-    //
-    //
-    
     public function dashboard()
     {
         $pendingAccounts = Customer::where('status', 'pending')
@@ -78,9 +71,9 @@ class ManagerController extends Controller
 
     public function rejectAccount(Request $request, Customer $customer)
     {
-        if ($customer->account_holder_type !== 'business') {
-            return back()->withErrors(['error' => 'Only business accounts require manager approval.']);
-        }
+        // if ($customer->account_holder_type !== 'business') {
+        //     return back()->withErrors(['error' => 'Only business accounts require manager approval.']);
+        // }
         $validated = $request->validate([
             'reason' => 'required|string|max:100',
         ]);
@@ -251,16 +244,7 @@ class ManagerController extends Controller
             ->paginate(20)
             ->appends($request->query());
 
-        return view('dashboard.manager.audit_history', compact(
-            'audits',
-            'users',
-            'modelOptions',
-            'userId',
-            'event',
-            'model',
-            'from',
-            'to'
-        ));
+        return view('dashboard.manager.audit_history', compact('audits','users','modelOptions','userId','event','model','from','to'));
     }
 
     // ============ Customer & Account Oversight ============

@@ -205,7 +205,7 @@
                                                                         <strong>Uploaded:</strong>
                                                                         {{ $document->uploaded_at }}
                                                                     </p>
-                                                                    <a href="{{ asset('storage/' . $document->file_path) }}"
+                                                                    <a href="{{ route('customers.documents.show', $document->id) }}"
                                                                         target="_blank"
                                                                         class="btn btn-sm btn-outline-primary">View
                                                                         Document</a>

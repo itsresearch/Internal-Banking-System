@@ -8,21 +8,27 @@ use App\Models\Customer;
 class CustomerController extends Controller
 {
     //
-    public function customersList()
+    public function customersList(Request $request)
     {
-        $customers = Customer::orderBy('id', 'desc')->get();
+        $q = trim((string) $request->query('q', ''));
 
-        return view('dashboard.customer.all_customers', compact('customers'));
+        $customers = Customer::query()
+            ->when($q !== '', function ($query) use ($q) {
+                $query->search($q);
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(20)
+            ->appends($request->query());
+
+        return view('dashboard.customer.all_customers', compact('customers', 'q'));
     }
     public function customerDetails($id)
     {
         $customer = Customer::find($id);
 
-        $documents = $customer
-            ? $customer->documents()
-                ->where(function ($doc) {
+        $documents = $customer ? $customer->documents() ->where(function ($doc) {
                     $doc->where('document_type', 'photo')
-                        ->orWhere(function ($citizenship) {
+                        ->orWhere(function ($citizenship) {   //closure function
                             $citizenship->where('document_type', 'citizenship') ->whereIn('document_side', ['front', 'back']);
                         });
                 })
@@ -48,7 +54,7 @@ class CustomerController extends Controller
             : collect();
 
         // Current balance is stored on customers.balance in this system.
-        $currentBalance = $customer?->balance ?? 0;
+        $currentBalance = $customer?->balance ?? 0;  // Use null safe operator to avoid errors if customer is null
 
         return view('dashboard.customer.customer_details', compact(
             'customer',
